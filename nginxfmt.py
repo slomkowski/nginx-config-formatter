@@ -14,6 +14,7 @@ INDENTATION = ' ' * 4
 
 
 def strip_line(single_line):
+    """Strips the line and replaces neighbouring whitespaces with single space (except when within quotation marks)."""
     within_quotes = False
     parts = []
     for part in re.split('"', single_line.strip()):
@@ -26,6 +27,7 @@ def strip_line(single_line):
 
 
 def clean_lines(orig_lines):
+    """Strips the lines and splits them if they contain curly brackets."""
     cleaned_lines = []
     for line in orig_lines:
         line = strip_line(line)
@@ -38,7 +40,8 @@ def clean_lines(orig_lines):
     return cleaned_lines
 
 
-def join_opening_parenthesis(lines):
+def join_opening_bracket(lines):
+    """When opening curly bracket is in it's own line (K&R convention), it's joined with precluding line (Java)."""
     modified_lines = []
     for i in range(len(lines)):
         if i > 0 and lines[i] == "{":
@@ -49,6 +52,7 @@ def join_opening_parenthesis(lines):
 
 
 def perform_indentation(lines):
+    """Indents the lines according to their nesting level determined by curly brackets."""
     indented_lines = []
     current_indent = 0
     for line in lines:
@@ -64,8 +68,9 @@ def perform_indentation(lines):
 
 
 def format_config_file(contents):
+    """Accepts the string containing nginx configuration and returns formatted one. Adds newline at the end."""
     lines = clean_lines(contents.splitlines())
-    lines = join_opening_parenthesis(lines)
+    lines = join_opening_bracket(lines)
     lines = perform_indentation(lines)
 
     return '\n'.join(lines) + '\n'

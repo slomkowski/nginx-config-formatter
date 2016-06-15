@@ -1,6 +1,11 @@
+"""Unit tests for nginxfmt module."""
+
 import unittest
 
 from nginxfmt import *
+
+__author__ = "Michał Słomkowski"
+__license__ = "Apache 2.0"
 
 
 class TestFormatter(unittest.TestCase):
@@ -9,7 +14,7 @@ class TestFormatter(unittest.TestCase):
 
     def test_join_opening_parenthesis(self):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
-                         join_opening_parenthesis(("foo", "bar {", "johan", "{", "tee", "ka", "}")))
+                         join_opening_bracket(("foo", "bar {", "johan", "{", "tee", "ka", "}")))
 
     def test_clear_lines(self):
         self.assertEqual(["ala", "ma", "{", "kota", "}", "to;", "", "ook"],
