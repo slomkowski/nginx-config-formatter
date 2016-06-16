@@ -35,7 +35,10 @@ def clean_lines(orig_lines):
             cleaned_lines.append("")
             continue
         else:
-            cleaned_lines.extend([l.strip() for l in re.split("([\\{\\}])", line) if l != ""])
+            if line.startswith("#"):
+                cleaned_lines.append(line)
+            else:
+                cleaned_lines.extend([l.strip() for l in re.split("([\\{\\}])", line) if l != ""])
 
     return cleaned_lines
 
@@ -56,12 +59,12 @@ def perform_indentation(lines):
     indented_lines = []
     current_indent = 0
     for line in lines:
-        if line.endswith('}') and current_indent > 0:
+        if not line.startswith("#") and line.endswith('}') and current_indent > 0:
             current_indent -= 1
 
         indented_lines.append(current_indent * INDENTATION + line)
 
-        if line.endswith('{'):
+        if not line.startswith("#") and line.endswith('{'):
             current_indent += 1
 
     return indented_lines
