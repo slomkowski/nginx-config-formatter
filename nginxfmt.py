@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-"""add module description
-"""
+"""Script formats nginx configuration file."""
 
 import argparse
 
@@ -96,11 +95,12 @@ if __name__ == "__main__":
 
     arg_parser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
     arg_parser.add_argument("-b", "--backup-original", action="store_true", help="backup original config file")
-    arg_parser.add_argument("config_file", type=argparse.FileType('r'), nargs='+')
+    arg_parser.add_argument("config_files", type=argparse.FileType('r'), nargs='+',
+                            help="configuration files to format")
 
     args = arg_parser.parse_args()
 
-    for config_file in args.config_file:
+    for config_file in args.config_files:
         original_file_content = config_file.read()
         config_file.close()
 
