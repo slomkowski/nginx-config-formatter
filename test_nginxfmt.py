@@ -26,7 +26,7 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual(["{", "ala", "ma", "{", "{", "kota", "}", "to", "}"],
                          clean_lines(("{", "ala  ", "ma  {{", "  kota ", "}", " to} ")))
 
-        self.assertEqual(["{", "ala", "# ma {{", "kota", "}", "to", "}", "# }"],
+        self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
                          clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
 
     def test_perform_indentation(self):

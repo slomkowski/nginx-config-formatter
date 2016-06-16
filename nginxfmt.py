@@ -15,9 +15,13 @@ INDENTATION = ' ' * 4
 
 def strip_line(single_line):
     """Strips the line and replaces neighbouring whitespaces with single space (except when within quotation marks)."""
+    single_line = single_line.strip()
+    if single_line.startswith('#'):
+        return single_line
+
     within_quotes = False
     parts = []
-    for part in re.split('"', single_line.strip()):
+    for part in re.split('"', single_line):
         if within_quotes:
             parts.append(part)
         else:
@@ -88,13 +92,13 @@ def format_config_file(contents):
 
 
 if __name__ == "__main__":
-    argparser = argparse.ArgumentParser(description=__doc__)
+    arg_parser = argparse.ArgumentParser(description=__doc__)
 
-    argparser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
-    argparser.add_argument("-b", "--backup-original", action="store_true", help="backup original config file")
-    argparser.add_argument("config_file", type=argparse.FileType('r'), nargs='+')
+    arg_parser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
+    arg_parser.add_argument("-b", "--backup-original", action="store_true", help="backup original config file")
+    arg_parser.add_argument("config_file", type=argparse.FileType('r'), nargs='+')
 
-    args = argparser.parse_args()
+    args = arg_parser.parse_args()
 
     for config_file in args.config_file:
         original_file_content = config_file.read()
