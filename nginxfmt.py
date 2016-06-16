@@ -62,7 +62,10 @@ def perform_indentation(lines):
         if not line.startswith("#") and line.endswith('}') and current_indent > 0:
             current_indent -= 1
 
-        indented_lines.append(current_indent * INDENTATION + line)
+        if line != "":
+            indented_lines.append(current_indent * INDENTATION + line)
+        else:
+            indented_lines.append("")
 
         if not line.startswith("#") and line.endswith('{'):
             current_indent += 1
@@ -76,7 +79,12 @@ def format_config_file(contents):
     lines = join_opening_bracket(lines)
     lines = perform_indentation(lines)
 
-    return '\n'.join(lines) + '\n'
+    text = '\n'.join(lines)
+
+    for pattern, substitute in ((r'\n{3,}', '\n\n\n'), (r'^\n', ''), (r'\n$', '')):
+        text = re.sub(pattern, substitute, text, re.MULTILINE)
+
+    return text + '\n'
 
 
 if __name__ == "__main__":

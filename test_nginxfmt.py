@@ -70,12 +70,20 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual('lorem ipsum " foo  bar zip " or "  dd aa  " mi',
                          strip_line('  lorem   ipsum   " foo  bar zip "  or \t "  dd aa  "  mi'))
 
-    def test_indentation(self):
+    def test_empty_lines_removal(self):
         self._check_formatting(
-            "  foo bar {\n" +
+            "\n  foo bar {\n" +
             "       lorem ipsum;\n" +
-            "}",
+            "}\n\n\n",
             "foo bar {\n" +
+            "    lorem ipsum;\n" +
+            "}\n")
+
+        self._check_formatting(
+            "\n  foo bar {\n\n\n\n\n\n" +
+            "       lorem ipsum;\n" +
+            "}\n\n\n",
+            "foo bar {\n\n\n" +
             "    lorem ipsum;\n" +
             "}\n")
 
