@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """Script formats nginx configuration file."""
 
 import argparse
+import codecs
 
 import re
 
@@ -76,7 +78,7 @@ def perform_indentation(lines):
     return indented_lines
 
 
-def format_config_file(contents):
+def format_config_contents(contents):
     """Accepts the string containing nginx configuration and returns formatted one. Adds newline at the end."""
     lines = clean_lines(contents.splitlines())
     lines = join_opening_bracket(lines)
@@ -90,28 +92,55 @@ def format_config_file(contents):
     return text + '\n'
 
 
+def format_config_file(file_path, original_backup_file_path=None, verbose=True):
+    """
+    Performs the formatting on the given file. The function tries to detect file encoding first.
+    :param file_path: path to original nginx configuration file. This file will be overridden.
+    :param original_backup_file_path: optional path, where original file will be backed up.
+    :param verbose: show messages
+    """
+    encodings = ('utf-8', 'latin1')
+
+    encoding_failures = []
+    chosen_encoding = None
+
+    for enc in encodings:
+        try:
+            with codecs.open(file_path, 'r', encoding=enc) as rfp:
+                original_file_content = rfp.read()
+            chosen_encoding = enc
+            break
+        except ValueError as e:
+            encoding_failures.append(e)
+
+    if chosen_encoding is None:
+        raise Exception('none of encodings %s are valid for file %s. Errors: %s'
+                        % (encodings, file_path, [e.message for e in encoding_failures]))
+
+    assert original_file_content is not None
+
+    with codecs.open(file_path, 'w', encoding=chosen_encoding) as wfp:
+        wfp.write(format_config_contents(original_file_content))
+
+    if verbose:
+        print("Formatted file '%s' (detected encoding %s)." % (file_path, chosen_encoding))
+
+    if original_backup_file_path:
+        with codecs.open(original_backup_file_path, 'w', encoding=chosen_encoding) as wfp:
+            wfp.write(original_file_content)
+        if verbose:
+            print("Original saved to '%s'." % original_backup_file_path)
+
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description=__doc__)
 
     arg_parser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
     arg_parser.add_argument("-b", "--backup-original", action="store_true", help="backup original config file")
-    arg_parser.add_argument("config_files", type=argparse.FileType('r'), nargs='+',
-                            help="configuration files to format")
+    arg_parser.add_argument("config_files", nargs='+', help="configuration files to format")
 
     args = arg_parser.parse_args()
 
-    for config_file in args.config_files:
-        original_file_content = config_file.read()
-        config_file.close()
-
-        with open(config_file.name, 'w') as fp:
-            fp.write(format_config_file(original_file_content))
-        if args.verbose:
-            print("Formatted file %s" % config_file.name)
-
-        if args.backup_original:
-            backup_file_path = config_file.name + '~'
-            with open(backup_file_path, 'w') as fp:
-                fp.write(original_file_content)
-            if args.verbose:
-                print("Original saved to %s" % backup_file_path)
+    for config_file_path in args.config_files:
+        backup_file_path = config_file_path + '~' if args.backup_original else None
+        format_config_file(config_file_path, backup_file_path, args.verbose)

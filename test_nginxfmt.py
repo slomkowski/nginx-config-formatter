@@ -1,5 +1,10 @@
-"""Unit tests for nginxfmt module."""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+"""Unit tests for nginxfmt module."""
+import os
+import shutil
+import tempfile
 import unittest
 
 from nginxfmt import *
@@ -10,7 +15,7 @@ __license__ = "Apache 2.0"
 
 class TestFormatter(unittest.TestCase):
     def _check_formatting(self, original_text, formatted_text):
-        self.assertEqual(formatted_text, format_config_file(original_text))
+        self.assertMultiLineEqual(formatted_text, format_config_contents(original_text))
 
     def test_join_opening_parenthesis(self):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
@@ -70,6 +75,26 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual('lorem ipsum " foo  bar zip " or "  dd aa  " mi',
                          strip_line('  lorem   ipsum   " foo  bar zip "  or \t "  dd aa  "  mi'))
 
+    def test_umlaut_in_string(self):
+        self._check_formatting(
+            "# Statusseite für Monitoring freigeben \n" +
+            "# line above contains german umlaut causing problems \n" +
+            "location /nginx_status {\n" +
+            "    stub_status on;\n" +
+            "  access_log off;\n" +
+            "  allow 127.0.0.1;\n" +
+            "    deny all;\n" +
+            "}",
+            "# Statusseite für Monitoring freigeben\n" +
+            "# line above contains german umlaut causing problems\n" +
+            "location /nginx_status {\n" +
+            "    stub_status on;\n" +
+            "    access_log off;\n" +
+            "    allow 127.0.0.1;\n" +
+            "    deny all;\n" +
+            "}\n"
+        )
+
     def test_empty_lines_removal(self):
         self._check_formatting(
             "\n  foo bar {\n" +
@@ -99,6 +124,20 @@ class TestFormatter(unittest.TestCase):
             "        caak;\n" +
             "    }\n" +
             "}\n")
+
+    def test_loading_utf8_file(self):
+        tmp_file = tempfile.mkstemp('utf-8')[1]
+        shutil.copy('test-files/umlaut-utf8.conf', tmp_file)
+        format_config_file(tmp_file, verbose=True)
+        # todo perform some tests on result file
+        os.unlink(tmp_file)
+
+    def test_loading_latin1_file(self):
+        tmp_file = tempfile.mkstemp('latin1')[1]
+        shutil.copy('test-files/umlaut-latin1.conf', tmp_file)
+        format_config_file(tmp_file, verbose=True)
+        # todo perform some tests on result file
+        os.unlink(tmp_file)
 
 
 if __name__ == '__main__':
