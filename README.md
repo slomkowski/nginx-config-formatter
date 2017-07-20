@@ -7,6 +7,7 @@ way, described below:
 * neighbouring empty lines are collapsed to at most two empty lines
 * curly braces placement follows Java convention
 * whitespaces are collapsed, except in comments an quotation marks
+* whitespaces in variable designators are removed: `${  my_variable }` is collapsed to `${my_variable}`
 
 ## Installation
 

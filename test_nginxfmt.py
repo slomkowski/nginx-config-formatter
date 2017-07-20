@@ -14,8 +14,11 @@ __license__ = "Apache 2.0"
 
 
 class TestFormatter(unittest.TestCase):
-    def _check_formatting(self, original_text, formatted_text):
+    def _check_formatting(self, original_text: str, formatted_text: str):
         self.assertMultiLineEqual(formatted_text, format_config_contents(original_text))
+
+    def _check_variable_tags_symmetry(self, text):
+        self.assertMultiLineEqual(text, strip_variable_template_tags(apply_variable_template_tags(text)))
 
     def test_join_opening_parenthesis(self):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
@@ -75,6 +78,12 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual('lorem ipsum " foo  bar zip " or "  dd aa  " mi',
                          strip_line('  lorem   ipsum   " foo  bar zip "  or \t "  dd aa  "  mi'))
 
+    def test_variable_template_tags(self):
+        self.assertEqual("foo bar ___TEMPLATE_VARIABLE_OPENING_TAG___myvar___TEMPLATE_VARIABLE_CLOSING_TAG___",
+                         apply_variable_template_tags("foo bar ${myvar}"))
+        self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet")
+        self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet\nother $var and ${var_name2}")
+
     def test_umlaut_in_string(self):
         self._check_formatting(
             "# Statusseite für Monitoring freigeben \n" +
@@ -124,6 +133,33 @@ class TestFormatter(unittest.TestCase):
             "        caak;\n" +
             "    }\n" +
             "}\n")
+
+    def test_template_variables_with_dollars(self):
+        self._check_formatting('server {\n' +
+                               '   # commented ${line} should not be touched\n' +
+                               'listen 80 default_server;\n' +
+                               'server_name localhost;\n' +
+                               'location / {\n' +
+                               'proxy_set_header X-User-Auth "In ${cookie_access_token} ${ other}";\n' +
+                               'proxy_set_header X-User-Other "foo ${bar}";\n' +
+                               '}\n' +
+                               '}',
+                               'server {\n' +
+                               '    # commented ${line} should not be touched\n' +
+                               '    listen 80 default_server;\n' +
+                               '    server_name localhost;\n' +
+                               '    location / {\n' +
+                               '        proxy_set_header X-User-Auth "In ${cookie_access_token} ${other}";\n' +
+                               '        proxy_set_header X-User-Other "foo ${bar}";\n' +
+                               '    }\n' +
+                               '}\n')
+
+        self._check_formatting(' some_tag { with_templates "my ${var} and other ${ variable_name   }  "; }\n' +
+                               '# in my line\n',
+                               'some_tag {\n' +
+                               '    with_templates "my ${var} and other ${variable_name}  ";\n' +
+                               '}\n' +
+                               '# in my line\n')
 
     def test_loading_utf8_file(self):
         tmp_file = tempfile.mkstemp('utf-8')[1]

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Script formats nginx configuration file."""
+"""This Python script formats nginx configuration files in consistent way.
+
+Originally published under https://github.com/1connect/nginx-config-formatter
+"""
 
 import argparse
 import codecs
@@ -10,8 +13,12 @@ import re
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
+__version__ = "1.0.1"
 
 INDENTATION = ' ' * 4
+
+TEMPLATE_VARIABLE_OPENING_TAG = '___TEMPLATE_VARIABLE_OPENING_TAG___'
+TEMPLATE_VARIABLE_CLOSING_TAG = '___TEMPLATE_VARIABLE_CLOSING_TAG___'
 
 
 def strip_line(single_line):
@@ -31,19 +38,37 @@ def strip_line(single_line):
     return '"'.join(parts)
 
 
+def apply_variable_template_tags(line: str) -> str:
+    """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
+    return re.sub(r'\${\s*(\w+)\s*}',
+                  TEMPLATE_VARIABLE_OPENING_TAG + r"\1" + TEMPLATE_VARIABLE_CLOSING_TAG,
+                  line,
+                  flags=re.UNICODE)
+
+
+def strip_variable_template_tags(line: str) -> str:
+    """Replaces tags back with ${ and } respectively."""
+    return re.sub(TEMPLATE_VARIABLE_OPENING_TAG + r'\s*(\w+)\s*' + TEMPLATE_VARIABLE_CLOSING_TAG,
+                  r'${\1}',
+                  line,
+                  flags=re.UNICODE)
+
+
 def clean_lines(orig_lines):
     """Strips the lines and splits them if they contain curly brackets."""
     cleaned_lines = []
     for line in orig_lines:
         line = strip_line(line)
+        line = apply_variable_template_tags(line)
         if line == "":
             cleaned_lines.append("")
             continue
         else:
             if line.startswith("#"):
-                cleaned_lines.append(line)
+                cleaned_lines.append(strip_variable_template_tags(line))
             else:
-                cleaned_lines.extend([l.strip() for l in re.split("([\\{\\}])", line) if l != ""])
+                cleaned_lines.extend(
+                    [strip_variable_template_tags(l).strip() for l in re.split(r"([{\\}])", line) if l != ""])
 
     return cleaned_lines
 
