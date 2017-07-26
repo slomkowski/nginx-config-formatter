@@ -13,7 +13,7 @@ import re
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 INDENTATION = ' ' * 4
 
@@ -54,7 +54,7 @@ def strip_variable_template_tags(line: str) -> str:
                   flags=re.UNICODE)
 
 
-def clean_lines(orig_lines):
+def clean_lines(orig_lines) -> list:
     """Strips the lines and splits them if they contain curly brackets."""
     cleaned_lines = []
     for line in orig_lines:
@@ -68,7 +68,7 @@ def clean_lines(orig_lines):
                 cleaned_lines.append(strip_variable_template_tags(line))
             else:
                 cleaned_lines.extend(
-                    [strip_variable_template_tags(l).strip() for l in re.split(r"([{\\}])", line) if l != ""])
+                    [strip_variable_template_tags(l).strip() for l in re.split(r"([{}])", line) if l != ""])
 
     return cleaned_lines
 
@@ -105,7 +105,8 @@ def perform_indentation(lines):
 
 def format_config_contents(contents):
     """Accepts the string containing nginx configuration and returns formatted one. Adds newline at the end."""
-    lines = clean_lines(contents.splitlines())
+    lines = contents.splitlines()
+    lines = clean_lines(lines)
     lines = join_opening_bracket(lines)
     lines = perform_indentation(lines)
 

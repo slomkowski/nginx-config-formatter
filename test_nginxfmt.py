@@ -24,7 +24,7 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
                          join_opening_bracket(("foo", "bar {", "johan", "{", "tee", "ka", "}")))
 
-    def test_clear_lines(self):
+    def test_clean_lines(self):
         self.assertEqual(["ala", "ma", "{", "kota", "}", "to;", "", "ook"],
                          clean_lines(("ala", "ma  {", "kota", "}", "to;", "", "ook")))
 
@@ -36,6 +36,8 @@ class TestFormatter(unittest.TestCase):
 
         self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
                          clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
+
+        self.assertEqual(["location ~ /\.ht", "{"], clean_lines(["location ~ /\.ht {", ]))
 
     def test_perform_indentation(self):
         self.assertEqual([
@@ -158,6 +160,21 @@ class TestFormatter(unittest.TestCase):
                                '# in my line\n',
                                'some_tag {\n' +
                                '    with_templates "my ${var} and other ${variable_name}  ";\n' +
+                               '}\n' +
+                               '# in my line\n')
+
+    def test_backslash(self):
+        self._check_formatting('location ~ /\.ht {\n' +
+                               'deny all;\n' +
+                               '}',
+                               'location ~ /\.ht {\n' +
+                               '    deny all;\n' +
+                               '}\n')
+
+        self._check_formatting(' tag { wt  ~  /\.ht \t "my ${var} and  ~  /\.ht \tother ${ variable_name   }  "; }\n' +
+                               '# in my line\n',
+                               'tag {\n' +
+                               '    wt ~ /\.ht "my ${var} and  ~  /\.ht \tother ${variable_name}  ";\n' +
                                '}\n' +
                                '# in my line\n')
 
