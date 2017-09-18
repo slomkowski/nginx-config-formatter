@@ -13,7 +13,7 @@ import re
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 INDENTATION = ' ' * 4
 
