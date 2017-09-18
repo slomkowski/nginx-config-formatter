@@ -24,7 +24,7 @@ test_requirements = [
 
 setup(
     name='nginxfmt',
-    version='1.0.2',
+    version='1.0.3',
     description="nginx config file formatter/beautifier written in Python.",
     long_description=readme + '\n\n' + history,
     author="Konrad Rotkiewicz",
