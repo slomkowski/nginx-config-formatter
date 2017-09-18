@@ -1,5 +1,7 @@
 # *nginx* config file formatter
 
+[![Build Status](https://travis-ci.org/ulamlabs/nginx-config-formatter.svg?branch=master)](https://travis-ci.org/ulamlabs/nginx-config-formatter)
+
 This Python script formats *nginx* configuration files in consistent
 way, described below:
 
