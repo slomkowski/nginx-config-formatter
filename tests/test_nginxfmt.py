@@ -9,12 +9,9 @@ import unittest
 
 from nginxfmt import *
 
-__author__ = "Michał Słomkowski"
-__license__ = "Apache 2.0"
-
 
 class TestFormatter(unittest.TestCase):
-    def _check_formatting(self, original_text: str, formatted_text: str):
+    def _check_formatting(self, original_text, formatted_text):
         self.assertMultiLineEqual(formatted_text, format_config_contents(original_text))
 
     def _check_variable_tags_symmetry(self, text):

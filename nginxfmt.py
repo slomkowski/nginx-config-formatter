@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 """This Python script formats nginx configuration files in consistent way.
@@ -38,7 +38,7 @@ def strip_line(single_line):
     return '"'.join(parts)
 
 
-def apply_variable_template_tags(line: str) -> str:
+def apply_variable_template_tags(line):
     """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
     return re.sub(r'\${\s*(\w+)\s*}',
                   TEMPLATE_VARIABLE_OPENING_TAG + r"\1" + TEMPLATE_VARIABLE_CLOSING_TAG,
@@ -46,7 +46,7 @@ def apply_variable_template_tags(line: str) -> str:
                   flags=re.UNICODE)
 
 
-def strip_variable_template_tags(line: str) -> str:
+def strip_variable_template_tags(line):
     """Replaces tags back with ${ and } respectively."""
     return re.sub(TEMPLATE_VARIABLE_OPENING_TAG + r'\s*(\w+)\s*' + TEMPLATE_VARIABLE_CLOSING_TAG,
                   r'${\1}',
@@ -54,7 +54,7 @@ def strip_variable_template_tags(line: str) -> str:
                   flags=re.UNICODE)
 
 
-def clean_lines(orig_lines) -> list:
+def clean_lines(orig_lines):
     """Strips the lines and splits them if they contain curly brackets."""
     cleaned_lines = []
     for line in orig_lines:
@@ -158,7 +158,7 @@ def format_config_file(file_path, original_backup_file_path=None, verbose=True):
             print("Original saved to '%s'." % original_backup_file_path)
 
 
-if __name__ == "__main__":
+def main():
     arg_parser = argparse.ArgumentParser(description=__doc__)
 
     arg_parser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
@@ -170,3 +170,7 @@ if __name__ == "__main__":
     for config_file_path in args.config_files:
         backup_file_path = config_file_path + '~' if args.backup_original else None
         format_config_file(config_file_path, backup_file_path, args.verbose)
+
+
+if __name__ == "__main__":
+    main()
