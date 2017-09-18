@@ -13,21 +13,12 @@ way, described below:
 
 ## Installation
 
-Python 3.2 or later is needed to run this program. The simplest form
-of installation would be copying `nginxfmt.py` to your scripts directory.
-
-You can also clone the repository and symlink the executable:
-
-```
-cd
-git clone https://github.com/1connect/nginx-config-formatter.git
-ln -s ~/nginx-config-formatter/nginxfmt.py ~/bin/nginxfmt.py
-```
+`pip install nginxfmt`
 
 ## Usage
 
 ```
-usage: nginxfmt.py [-h] [-v] [-b] config_files [config_files ...]
+usage: nginxfmt [-h] [-v] [-b] config_files [config_files ...]
 
 Script formats nginx configuration file.
 
