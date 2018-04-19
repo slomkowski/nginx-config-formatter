@@ -5,10 +5,10 @@
 
 from setuptools import setup, find_packages
 
-with open('README.md') as readme_file:
+with open('README.md', encoding='utf-8', errors='ignore') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
+with open('HISTORY.rst', encoding='utf-8', errors='ignore') as history_file:
     history = history_file.read()
 
 requirements = [
@@ -24,7 +24,7 @@ test_requirements = [
 
 setup(
     name='nginxfmt',
-    version='1.0.4',
+    version='1.0.5',
     description="nginx config file formatter/beautifier written in Python.",
     long_description=readme + '\n\n' + history,
     author="Konrad Rotkiewicz",
