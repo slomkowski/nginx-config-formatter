@@ -66,6 +66,8 @@ def clean_lines(orig_lines) -> list:
         else:
             if line.startswith("#"):
                 cleaned_lines.append(strip_variable_template_tags(line))
+            elif line.startswith("rewrite"):
+                cleaned_lines.append(strip_variable_template_tags(line))
             else:
                 cleaned_lines.extend(
                     [strip_variable_template_tags(l).strip() for l in re.split(r"([{}])", line) if l != ""])
