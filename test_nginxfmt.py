@@ -36,6 +36,12 @@ class TestFormatter(unittest.TestCase):
 
         self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
                          clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
+        
+        self.assertEqual(["{", "ala", "# ma  {{", "rewrite /([\d]{2}) /up/$1.html last;", "}", "to", "}"],
+                        clean_lines(("{", "ala  ", "# ma  {{", "  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
+
+        self.assertEqual(["{", "ala", "# ma  {{", "aa last;", "bb to;", "}"],
+                        clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
 
         self.assertEqual(["location ~ /\.ht", "{"], clean_lines(["location ~ /\.ht {", ]))
 
@@ -177,6 +183,16 @@ class TestFormatter(unittest.TestCase):
                                '    wt ~ /\.ht "my ${var} and  ~  /\.ht \tother ${variable_name}  ";\n' +
                                '}\n' +
                                '# in my line\n')
+
+    def test_multi_semicolon(self):
+        self._check_formatting('location /a { \n' +
+                               'allow   127.0.0.1; allow  10.0.0.0/8; deny all; \n' +
+                               '}\n',
+                               'location /a {\n' +
+                               '    allow 127.0.0.1;\n' +
+                               '    allow 10.0.0.0/8;\n' +
+                               '    deny all;\n' +
+                               '}\n')
 
     def test_loading_utf8_file(self):
         tmp_file = tempfile.mkstemp('utf-8')[1]
