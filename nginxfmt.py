@@ -37,6 +37,38 @@ def strip_line(single_line):
         within_quotes = not within_quotes
     return '"'.join(parts)
 
+def count_multi_semicolon(single_line):
+    """count multi_semicolon (except when within quotation marks)."""
+    single_line = single_line.strip()
+    if single_line.startswith('#'):
+        return 0, 0
+
+    within_quotes = False
+    q = 0
+    c = 0
+    for part in re.split('"', single_line):
+        if within_quotes:
+            q = 1
+        else:
+            c += part.count(';')
+        within_quotes = not within_quotes
+    return q, c
+
+def multi_semicolon(single_line):
+    """break multi_semicolon into multiline (except when within quotation marks)."""
+    single_line = single_line.strip()
+    if single_line.startswith('#'):
+        return single_line
+
+    within_quotes = False
+    parts = []
+    for part in re.split('"', single_line):
+        if within_quotes:
+            parts.append(part)
+        else:
+            parts.append(part.replace(";", ";\n"))
+        within_quotes = not within_quotes
+    return '"'.join(parts)
 
 def apply_variable_template_tags(line: str) -> str:
     """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
@@ -67,7 +99,11 @@ def clean_lines(orig_lines) -> list:
             if line.startswith("#"):
                 cleaned_lines.append(strip_variable_template_tags(line))
             else:
-                if line.count(";") > 1:
+                q , c = count_multi_semicolon(line)
+                if q == 1 and c > 1:
+                    ml = multi_semicolon(line)
+                    cleaned_lines.extend(clean_lines(ml.splitlines()))
+                elif q != 1 and c > 1:
                     newlines = line.split(";")
                     cleaned_lines.extend(clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""]))
                 else:

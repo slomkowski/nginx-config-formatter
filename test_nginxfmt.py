@@ -43,6 +43,9 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual(["{", "ala", "# ma  {{", "aa last;", "bb to;", "}"],
                         clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
 
+        self.assertEqual(["{", "aa;", "b b \"cc;   dd; ee \";", "ssss;", "}"],
+                        clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
+
         self.assertEqual(["location ~ /\.ht", "{"], clean_lines(["location ~ /\.ht {", ]))
 
     def test_perform_indentation(self):
