@@ -37,8 +37,8 @@ class TestFormatter(unittest.TestCase):
         self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
                          clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
         
-        self.assertEqual(["{", "ala", "# ma  {{", "rewrite /([\d]{2}) /up/$1.html last;", "}", "to", "}"],
-                        clean_lines(("{", "ala  ", "# ma  {{", "  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
+        self.assertEqual(["{", "ala", "# ma  {{", "rewrite \"/([\d]{2})\" /up/$1.html last;", "}", "to", "}"],
+                        clean_lines(("{", "ala  ", "# ma  {{", "  rewrite \"/([\d]{2})\" /up/$1.html last;  ", "}", " to", "}")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "aa last;", "bb to;", "}"],
                         clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
@@ -48,7 +48,7 @@ class TestFormatter(unittest.TestCase):
 
         self.assertEqual(["{", "a aa;", "bb b \"ccc; dddd;\";", "ee e; # ff; ee ;", "}"],
                         clean_lines(("{", "a  aa;   bb    b \"ccc; dddd;\"; ee   e; # ff; ee ;", "}")))
-
+        
         self.assertEqual(["location ~ /\.ht", "{"], clean_lines(["location ~ /\.ht {", ]))
 
     def test_perform_indentation(self):
@@ -199,6 +199,10 @@ class TestFormatter(unittest.TestCase):
                                '    allow 10.0.0.0/8;\n' +
                                '    deny all;\n' +
                                '}\n')
+
+    def test_reg_template_tags(self):
+        self.assertEqual('server_name "~^(?<tag>[0-9a-f]___TEMPLATE_REG_OPENING_TAG___8___TEMPLATE_REG_CLOSING_TAG___)\.a\.b\.com$";',
+                         apply_reg_template_tags('server_name "~^(?<tag>[0-9a-f]{8})\.a\.b\.com$";'))
 
     def test_loading_utf8_file(self):
         tmp_file = tempfile.mkstemp('utf-8')[1]

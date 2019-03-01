@@ -20,6 +20,8 @@ INDENTATION = ' ' * 4
 TEMPLATE_VARIABLE_OPENING_TAG = '___TEMPLATE_VARIABLE_OPENING_TAG___'
 TEMPLATE_VARIABLE_CLOSING_TAG = '___TEMPLATE_VARIABLE_CLOSING_TAG___'
 
+TEMPLATE_REG_OPENING_TAG = '___TEMPLATE_REG_OPENING_TAG___'
+TEMPLATE_REG_CLOSING_TAG = '___TEMPLATE_REG_CLOSING_TAG___'
 
 def strip_line(single_line):
     """Strips the line and replaces neighbouring whitespaces with single space (except when within quotation marks)."""
@@ -45,7 +47,7 @@ def multi_semicolon(single_line):
         return single_line, 0
 
     m1 = re.match(r"^([^;#]*;)([\s]*#.*)?$", single_line)
-    m2 = re.match(r"^([^#]+)(;[\s]*)(#.*)?$", single_line)
+    m2 = re.match(r"^([^#]+)([;][\s]*)(#.*)?$", single_line)
     
     if m1 is not None:
         return single_line, 0
@@ -74,6 +76,30 @@ def multi_semicolon(single_line):
         return single_line, 0
 
 
+def apply_reg_template_tags(line: str) -> str:
+    """Replaces rewrite/server_name/if/location regular expression have { } in quotes with tags"""
+    parts = []
+    within_quotes = False
+    for part in re.split('"', line):
+           if within_quotes:
+               part = part.replace("{", TEMPLATE_REG_OPENING_TAG)
+               part = part.replace("}", TEMPLATE_REG_CLOSING_TAG)
+               parts.append(part)
+           else:
+               parts.append(part)
+           within_quotes = not within_quotes
+    
+    line = '"'.join(parts)
+    return line
+
+
+def strip_reg_template_tags(line: str) -> str:
+    """Replaces rewrite/server_name/if/location regular expression have { } in quotes with tags"""
+    line = line.replace(TEMPLATE_REG_OPENING_TAG, "{")
+    line = line.replace(TEMPLATE_REG_CLOSING_TAG, "}")
+    return line
+
+
 def apply_variable_template_tags(line: str) -> str:
     """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
     return re.sub(r'\${\s*(\w+)\s*}',
@@ -96,22 +122,20 @@ def clean_lines(orig_lines) -> list:
     for line in orig_lines:
         line = strip_line(line)
         line = apply_variable_template_tags(line)
+        line = apply_reg_template_tags(line)
         if line == "":
             cleaned_lines.append("")
             continue
         else:
             if line.startswith("#"):
-                cleaned_lines.append(strip_variable_template_tags(line))
+                cleaned_lines.append(strip_reg_template_tags(strip_variable_template_tags(line)))
             else:
                 mline, c = multi_semicolon(line)
                 if c > 0:
                     cleaned_lines.extend(clean_lines(mline.splitlines()))
                 else:
-                    if mline.startswith("rewrite"):
-                        cleaned_lines.append(strip_variable_template_tags(mline)) 
-                    else:
-                        cleaned_lines.extend(
-                            [strip_variable_template_tags(l).strip() for l in re.split(r"([{}])", mline) if l != ""])
+                    cleaned_lines.extend(
+                        [strip_reg_template_tags(strip_variable_template_tags(l)).strip() for l in re.split(r"([{}])", mline) if l != ""])
     return cleaned_lines
 
 
