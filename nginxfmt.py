@@ -39,6 +39,7 @@ def strip_line(single_line):
         within_quotes = not within_quotes
     return '"'.join(parts)
 
+
 def multi_semicolon(single_line):
     """break multi_semicolon into multiline (except when within quotation marks)."""
 
@@ -98,7 +99,6 @@ def strip_reg_template_tags(line: str) -> str:
     line = line.replace(TEMPLATE_REG_OPENING_TAG, "{")
     line = line.replace(TEMPLATE_REG_CLOSING_TAG, "}")
     return line
-
 
 def apply_variable_template_tags(line: str) -> str:
     """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
