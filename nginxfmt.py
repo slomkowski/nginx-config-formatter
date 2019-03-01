@@ -47,7 +47,7 @@ def multi_semicolon(single_line):
         return single_line, 0
 
     m1 = re.match(r"^([^;#]*;)([\s]*#.*)?$", single_line)
-    m2 = re.match(r"^([^#]+)([;][\s]*)(#.*)?$", single_line)
+    m2 = re.match(r"^([^#]+)(;[\s]*)(#.*)?$", single_line)
     
     if m1 is not None:
         return single_line, 0
