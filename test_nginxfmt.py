@@ -36,15 +36,16 @@ class TestFormatter(unittest.TestCase):
 
         self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
                          clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
-        
+
         self.assertEqual(["{", "ala", "# ma  {{", "rewrite /([\d]{2}) /up/$1.html last;", "}", "to", "}"],
-                        clean_lines(("{", "ala  ", "# ma  {{", "  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
+                         clean_lines(
+                             ("{", "ala  ", "# ma  {{", "  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "aa last;", "bb to;", "}"],
-                        clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
+                         clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
 
         self.assertEqual(["{", "aa;", "b b \"cc;   dd; ee \";", "ssss;", "}"],
-                        clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
+                         clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
 
         self.assertEqual(["location ~ /\.ht", "{"], clean_lines(["location ~ /\.ht {", ]))
 
@@ -90,12 +91,17 @@ class TestFormatter(unittest.TestCase):
                          strip_line('  lorem   ipsum   " foo  bar zip "  or \t "  dd aa  "  mi'))
 
     def test_apply_bracket_template_tags(self):
-        self.assertEqual("\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"", apply_bracket_template_tags("\"aaa{dd}bbb\""))
-        self.assertEqual("\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"", apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\""))
+        self.assertEqual("\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"",
+                         apply_bracket_template_tags("\"aaa{dd}bbb\""))
+        self.assertEqual(
+            "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"",
+            apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\""))
 
     def test_strip_bracket_template_tags(self):
-        self.assertEqual("\"aaa{dd}bbb\"", strip_bracket_template_tags("\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\""))
-        self.assertEqual("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"", apply_bracket_template_tags("\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\""))
+        self.assertEqual("\"aaa{dd}bbb\"", strip_bracket_template_tags(
+            "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\""))
+        self.assertEqual("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"", apply_bracket_template_tags(
+            "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\""))
 
     def test_variable_template_tags(self):
         self.assertEqual("foo bar ___TEMPLATE_VARIABLE_OPENING_TAG___myvar___TEMPLATE_VARIABLE_CLOSING_TAG___",

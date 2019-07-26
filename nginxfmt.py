@@ -23,6 +23,7 @@ TEMPLATE_VARIABLE_CLOSING_TAG = '___TEMPLATE_VARIABLE_CLOSING_TAG___'
 TEMPLATE_BRACKET_OPENING_TAG = '___TEMPLATE_BRACKET_OPENING_TAG___'
 TEMPLATE_BRACKET_CLOSING_TAG = '___TEMPLATE_BRACKET_CLOSING_TAG___'
 
+
 def strip_line(single_line):
     """Strips the line and replaces neighbouring whitespaces with single space (except when within quotation marks)."""
     single_line = single_line.strip()
@@ -38,6 +39,7 @@ def strip_line(single_line):
             parts.append(re.sub(r'[\s]+', ' ', part))
         within_quotes = not within_quotes
     return '"'.join(parts)
+
 
 def count_multi_semicolon(single_line):
     """count multi_semicolon (except when within quotation marks)."""
@@ -56,6 +58,7 @@ def count_multi_semicolon(single_line):
         within_quotes = not within_quotes
     return q, c
 
+
 def multi_semicolon(single_line):
     """break multi_semicolon into multiline (except when within quotation marks)."""
     single_line = single_line.strip()
@@ -72,6 +75,7 @@ def multi_semicolon(single_line):
         within_quotes = not within_quotes
     return '"'.join(parts)
 
+
 def apply_variable_template_tags(line: str) -> str:
     """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
     return re.sub(r'\${\s*(\w+)\s*}',
@@ -86,6 +90,7 @@ def strip_variable_template_tags(line: str) -> str:
                   r'${\1}',
                   line,
                   flags=re.UNICODE)
+
 
 def apply_bracket_template_tags(content: str) -> str:
     """ Replaces bracket { and } with tags, so subsequent formatting is easier."""
@@ -108,16 +113,19 @@ def apply_bracket_template_tags(content: str) -> str:
         last_c = c
     return result
 
+
 def reverse_in_quotes_status(status: bool) -> bool:
     if status:
         return False
     return True
+
 
 def strip_bracket_template_tags(content: str) -> str:
     """ Replaces tags back with { and } respectively."""
     content = content.replace(TEMPLATE_BRACKET_OPENING_TAG, "{", -1)
     content = content.replace(TEMPLATE_BRACKET_CLOSING_TAG, "}", -1)
     return content
+
 
 def clean_lines(orig_lines) -> list:
     """Strips the lines and splits them if they contain curly brackets."""
@@ -132,7 +140,7 @@ def clean_lines(orig_lines) -> list:
             if line.startswith("#"):
                 cleaned_lines.append(strip_variable_template_tags(line))
             else:
-                q , c = count_multi_semicolon(line)
+                q, c = count_multi_semicolon(line)
                 if q == 1 and c > 1:
                     ml = multi_semicolon(line)
                     cleaned_lines.extend(clean_lines(ml.splitlines()))
@@ -141,7 +149,7 @@ def clean_lines(orig_lines) -> list:
                     cleaned_lines.extend(clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""]))
                 else:
                     if line.startswith("rewrite"):
-                        cleaned_lines.append(strip_variable_template_tags(line)) 
+                        cleaned_lines.append(strip_variable_template_tags(line))
                     else:
                         cleaned_lines.extend(
                             [strip_variable_template_tags(l).strip() for l in re.split(r"([{}])", line) if l != ""])
