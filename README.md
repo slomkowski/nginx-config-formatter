@@ -25,7 +25,7 @@ ln -s ~/nginx-config-formatter/nginxfmt.py ~/bin/nginxfmt.py
 ## Usage
 
 ```
-usage: nginxfmt.py [-h] [-v] [-b] config_files [config_files ...]
+usage: nginxfmt.py [-h] [-v] [-b] [-i INDENT] config_files [config_files ...]
 
 Script formats nginx configuration file.
 
@@ -37,6 +37,8 @@ optional arguments:
   -v, --verbose         show formatted file names
   -b, --backup-original
                         backup original config file
+  -i INDENT, --indent INDENT
+                        specify number of spaces for indentation
 ```
 
 ## Credits
