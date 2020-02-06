@@ -147,10 +147,10 @@ class Formatter:
                     q, c = self.count_multi_semicolon(line)
                     if q == 1 and c > 1:
                         ml = self.multi_semicolon(line)
-                        cleaned_lines.extend(clean_lines(ml.splitlines()))
+                        cleaned_lines.extend(self.clean_lines(ml.splitlines()))
                     elif q != 1 and c > 1:
                         newlines = line.split(";")
-                        cleaned_lines.extend(clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""]))
+                        cleaned_lines.extend(self.clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""]))
                     else:
                         if line.startswith("rewrite"):
                             cleaned_lines.append(self.strip_variable_template_tags(line))
