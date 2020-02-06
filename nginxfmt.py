@@ -26,7 +26,6 @@ class Formatter:
     def __init__(self, indent, verbose):
         self.INDENTATION = ' ' * indent
         self.VERBOSE = verbose if verbose is not None else True
-        print(self)
     
     
     def strip_line(self, single_line):
