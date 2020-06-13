@@ -20,8 +20,9 @@ INDENTATION = ' ' * 4
 TEMPLATE_VARIABLE_OPENING_TAG = '___TEMPLATE_VARIABLE_OPENING_TAG___'
 TEMPLATE_VARIABLE_CLOSING_TAG = '___TEMPLATE_VARIABLE_CLOSING_TAG___'
 
-TEMPLATE_REG_OPENING_TAG = '___TEMPLATE_REG_OPENING_TAG___'
-TEMPLATE_REG_CLOSING_TAG = '___TEMPLATE_REG_CLOSING_TAG___'
+TEMPLATE_BRACKET_OPENING_TAG = '___TEMPLATE_BRACKET_OPENING_TAG___'
+TEMPLATE_BRACKET_CLOSING_TAG = '___TEMPLATE_BRACKET_CLOSING_TAG___'
+
 
 def strip_line(single_line):
     """Strips the line and replaces neighbouring whitespaces with single space (except when within quotation marks)."""
@@ -40,65 +41,40 @@ def strip_line(single_line):
     return '"'.join(parts)
 
 
-def multi_semicolon(single_line):
-    """break multi_semicolon into multiline (except when within quotation marks)."""
-
+def count_multi_semicolon(single_line):
+    """count multi_semicolon (except when within quotation marks)."""
     single_line = single_line.strip()
     if single_line.startswith('#'):
-        return single_line, 0
+        return 0, 0
 
-    m1 = re.match(r"^([^;#]*;)([\s]*#.*)?$", single_line)
-    m2 = re.match(r"^([^#]+)(;[\s]*)(#.*)?$", single_line)
-    
-    if m1 is not None:
-        return single_line, 0
-    elif m2 is not None:
-        front = m2.group(1)
-        semicolon = m2.group(2)
-        comment = m2.group(3)
-
-        within_quotes = False
-        parts = []
-        c = 0
-        for part in re.split('"', front):
-           if within_quotes:
-               parts.append(part)
-           else:
-               c += part.count(';')
-               parts.append(part.replace(";", ";\n"))
-           within_quotes = not within_quotes
-        multi_line = '"'.join(parts)
-        if semicolon is not None:
-            multi_line = multi_line + semicolon
-        if comment is not None:
-            multi_line = multi_line + comment
-        return multi_line, c
-    else:
-        return single_line, 0
-
-
-def apply_reg_template_tags(line: str) -> str:
-    """Replaces rewrite/server_name/if/location regular expression have { } in quotes with tags"""
-    parts = []
     within_quotes = False
-    for part in re.split('"', line):
-           if within_quotes:
-               part = part.replace("{", TEMPLATE_REG_OPENING_TAG)
-               part = part.replace("}", TEMPLATE_REG_CLOSING_TAG)
-               parts.append(part)
-           else:
-               parts.append(part)
-           within_quotes = not within_quotes
-    
-    line = '"'.join(parts)
-    return line
+    q = 0
+    c = 0
+    for part in re.split('"', single_line):
+        if within_quotes:
+            q = 1
+        else:
+            c += part.count(';')
+        within_quotes = not within_quotes
+    return q, c
 
 
-def strip_reg_template_tags(line: str) -> str:
-    """Replaces rewrite/server_name/if/location regular expression have { } in quotes with tags"""
-    line = line.replace(TEMPLATE_REG_OPENING_TAG, "{")
-    line = line.replace(TEMPLATE_REG_CLOSING_TAG, "}")
-    return line
+def multi_semicolon(single_line):
+    """break multi_semicolon into multiline (except when within quotation marks)."""
+    single_line = single_line.strip()
+    if single_line.startswith('#'):
+        return single_line
+
+    within_quotes = False
+    parts = []
+    for part in re.split('"', single_line):
+        if within_quotes:
+            parts.append(part)
+        else:
+            parts.append(part.replace(";", ";\n"))
+        within_quotes = not within_quotes
+    return '"'.join(parts)
+
 
 def apply_variable_template_tags(line: str) -> str:
     """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""
@@ -116,26 +92,67 @@ def strip_variable_template_tags(line: str) -> str:
                   flags=re.UNICODE)
 
 
+def apply_bracket_template_tags(content: str) -> str:
+    """ Replaces bracket { and } with tags, so subsequent formatting is easier."""
+    result = ""
+    in_quotes = False
+    last_c = ""
+
+    for c in content:
+        if (c == "\'" or c == "\"") and last_c != "\\":
+            in_quotes = reverse_in_quotes_status(in_quotes)
+        if in_quotes:
+            if c == "{":
+                result += TEMPLATE_BRACKET_OPENING_TAG
+            elif c == "}":
+                result += TEMPLATE_BRACKET_CLOSING_TAG
+            else:
+                result += c
+        else:
+            result += c
+        last_c = c
+    return result
+
+
+def reverse_in_quotes_status(status: bool) -> bool:
+    if status:
+        return False
+    return True
+
+
+def strip_bracket_template_tags(content: str) -> str:
+    """ Replaces tags back with { and } respectively."""
+    content = content.replace(TEMPLATE_BRACKET_OPENING_TAG, "{", -1)
+    content = content.replace(TEMPLATE_BRACKET_CLOSING_TAG, "}", -1)
+    return content
+
+
 def clean_lines(orig_lines) -> list:
     """Strips the lines and splits them if they contain curly brackets."""
     cleaned_lines = []
     for line in orig_lines:
         line = strip_line(line)
         line = apply_variable_template_tags(line)
-        line = apply_reg_template_tags(line)
         if line == "":
             cleaned_lines.append("")
             continue
         else:
             if line.startswith("#"):
-                cleaned_lines.append(strip_reg_template_tags(strip_variable_template_tags(line)))
+                cleaned_lines.append(strip_variable_template_tags(line))
             else:
-                mline, c = multi_semicolon(line)
-                if c > 0:
-                    cleaned_lines.extend(clean_lines(mline.splitlines()))
+                q, c = count_multi_semicolon(line)
+                if q == 1 and c > 1:
+                    ml = multi_semicolon(line)
+                    cleaned_lines.extend(clean_lines(ml.splitlines()))
+                elif q != 1 and c > 1:
+                    newlines = line.split(";")
+                    cleaned_lines.extend(clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""]))
                 else:
-                    cleaned_lines.extend(
-                        [strip_reg_template_tags(strip_variable_template_tags(l)).strip() for l in re.split(r"([{}])", mline) if l != ""])
+                    if line.startswith("rewrite"):
+                        cleaned_lines.append(strip_variable_template_tags(line))
+                    else:
+                        cleaned_lines.extend(
+                            [strip_variable_template_tags(l).strip() for l in re.split(r"([{}])", line) if l != ""])
     return cleaned_lines
 
 
@@ -171,12 +188,14 @@ def perform_indentation(lines):
 
 def format_config_contents(contents):
     """Accepts the string containing nginx configuration and returns formatted one. Adds newline at the end."""
+    contents = apply_bracket_template_tags(contents)
     lines = contents.splitlines()
     lines = clean_lines(lines)
     lines = join_opening_bracket(lines)
     lines = perform_indentation(lines)
 
     text = '\n'.join(lines)
+    text = strip_bracket_template_tags(text)
 
     for pattern, substitute in ((r'\n{3,}', '\n\n\n'), (r'^\n', ''), (r'\n$', '')):
         text = re.sub(pattern, substitute, text, re.MULTILINE)

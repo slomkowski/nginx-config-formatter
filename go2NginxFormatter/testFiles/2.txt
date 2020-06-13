@@ -1,0 +1,9 @@
+2.txt
+中国人" lsk 中国字
+中国人' lsk 中国字
+"'"
+# aaa's sldk
+     # bbb 's  ccc  
+	# ccc' s
+111 '  222" 3333\" ' lfkds
+  A1122 ${sss} 33
