@@ -92,26 +92,38 @@ def strip_variable_template_tags(line: str) -> str:
                   flags=re.UNICODE)
 
 
-def apply_bracket_template_tags(content: str) -> str:
+def apply_bracket_template_tags(lines: list) -> list:
     """ Replaces bracket { and } with tags, so subsequent formatting is easier."""
-    result = ""
-    in_quotes = False
-    last_c = ""
+    formatted_lines = []
 
-    for c in content:
-        if (c == "\'" or c == "\"") and last_c != "\\":
-            in_quotes = reverse_in_quotes_status(in_quotes)
-        if in_quotes:
-            if c == "{":
-                result += TEMPLATE_BRACKET_OPENING_TAG
-            elif c == "}":
-                result += TEMPLATE_BRACKET_CLOSING_TAG
+    for line in lines:
+        formatted_line = ""
+        in_quotes = False
+        last_char = ""
+
+        if line.startswith('#'):
+            formatted_line += line
+            continue
+
+        for char in line:
+            if (char == "\'" or char == "\"") and last_char != "\\":
+                in_quotes = reverse_in_quotes_status(in_quotes)
+
+            if in_quotes:
+                if char == "{":
+                    formatted_line += TEMPLATE_BRACKET_OPENING_TAG
+                elif char == "}":
+                    formatted_line += TEMPLATE_BRACKET_CLOSING_TAG
+                else:
+                    formatted_line += char
             else:
-                result += c
-        else:
-            result += c
-        last_c = c
-    return result
+                formatted_line += char
+
+            last_char = char
+
+        formatted_lines.append(formatted_line)
+
+    return formatted_lines
 
 
 def reverse_in_quotes_status(status: bool) -> bool:
@@ -172,7 +184,7 @@ def perform_indentation(lines):
     indented_lines = []
     current_indent = 0
     for line in lines:
-        if not line.startswith("#") and (line.endswith('}') or line.endswith(TEMPLATE_BRACKET_CLOSING_TAG)) and current_indent > 0:
+        if not line.startswith("#") and line.endswith('}') and current_indent > 0:
             current_indent -= 1
 
         if line != "":
@@ -180,7 +192,7 @@ def perform_indentation(lines):
         else:
             indented_lines.append("")
 
-        if not line.startswith("#") and (line.endswith('{') or line.endswith(TEMPLATE_BRACKET_OPENING_TAG)):
+        if not line.startswith("#") and line.endswith('{'):
             current_indent += 1
 
     return indented_lines
@@ -188,8 +200,8 @@ def perform_indentation(lines):
 
 def format_config_contents(contents):
     """Accepts the string containing nginx configuration and returns formatted one. Adds newline at the end."""
-    contents = apply_bracket_template_tags(contents)
     lines = contents.splitlines()
+    lines = apply_bracket_template_tags(lines)
     lines = clean_lines(lines)
     lines = join_opening_bracket(lines)
     lines = perform_indentation(lines)
