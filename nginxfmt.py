@@ -172,7 +172,7 @@ def perform_indentation(lines):
     indented_lines = []
     current_indent = 0
     for line in lines:
-        if not line.startswith("#") and line.endswith('}') and current_indent > 0:
+        if not line.startswith("#") and (line.endswith('}') or line.endswith(TEMPLATE_BRACKET_CLOSING_TAG)) and current_indent > 0:
             current_indent -= 1
 
         if line != "":
@@ -180,7 +180,7 @@ def perform_indentation(lines):
         else:
             indented_lines.append("")
 
-        if not line.startswith("#") and line.endswith('{'):
+        if not line.startswith("#") and (line.endswith('{') or line.endswith(TEMPLATE_BRACKET_OPENING_TAG)):
             current_indent += 1
 
     return indented_lines
