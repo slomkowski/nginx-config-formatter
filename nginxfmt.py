@@ -103,23 +103,22 @@ def apply_bracket_template_tags(lines: list) -> list:
 
         if line.startswith('#'):
             formatted_line += line
-            continue
+        else:
+            for char in line:
+                if (char == "\'" or char == "\"") and last_char != "\\":
+                    in_quotes = reverse_in_quotes_status(in_quotes)
 
-        for char in line:
-            if (char == "\'" or char == "\"") and last_char != "\\":
-                in_quotes = reverse_in_quotes_status(in_quotes)
-
-            if in_quotes:
-                if char == "{":
-                    formatted_line += TEMPLATE_BRACKET_OPENING_TAG
-                elif char == "}":
-                    formatted_line += TEMPLATE_BRACKET_CLOSING_TAG
+                if in_quotes:
+                    if char == "{":
+                        formatted_line += TEMPLATE_BRACKET_OPENING_TAG
+                    elif char == "}":
+                        formatted_line += TEMPLATE_BRACKET_CLOSING_TAG
+                    else:
+                        formatted_line += char
                 else:
                     formatted_line += char
-            else:
-                formatted_line += char
 
-            last_char = char
+                last_char = char
 
         formatted_lines.append(formatted_line)
 
