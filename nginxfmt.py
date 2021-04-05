@@ -214,7 +214,8 @@ def format_config_file(file_path, original_backup_file_path=None, verbose=True):
 
     encoding_failures = []
     chosen_encoding = None
-
+    original_file_content = None
+    
     for enc in encodings:
         try:
             with codecs.open(file_path, 'r', encoding=enc) as rfp:
