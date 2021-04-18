@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 """Unit tests for nginxfmt module."""
-import os
 import shutil
 import tempfile
 import unittest
@@ -14,46 +13,53 @@ __license__ = "Apache 2.0"
 
 
 class TestFormatter(unittest.TestCase):
+    fmt = Formatter()
+
+    def __init__(self, method_name: str = ...) -> None:
+        super().__init__(method_name)
+        logging.basicConfig(level=logging.DEBUG)  # todo fix logging in debug
+
     def _check_formatting(self, original_text: str, formatted_text: str):
-        self.assertMultiLineEqual(formatted_text, format_config_contents(original_text))
+        self.assertMultiLineEqual(formatted_text, self.fmt.format_string(original_text))
 
     def _check_variable_tags_symmetry(self, text):
-        self.assertMultiLineEqual(text, strip_variable_template_tags(apply_variable_template_tags(text)))
+        self.assertMultiLineEqual(text,
+                                  self.fmt.strip_variable_template_tags(self.fmt.apply_variable_template_tags(text)))
 
     def test_join_opening_parenthesis(self):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
-                         join_opening_bracket(("foo", "bar {", "johan", "{", "tee", "ka", "}")))
+                         self.fmt._join_opening_bracket(("foo", "bar {", "johan", "{", "tee", "ka", "}")))
 
     def test_clean_lines(self):
         self.assertEqual(["ala", "ma", "{", "kota", "}", "to;", "", "ook"],
-                         clean_lines(("ala", "ma  {", "kota", "}", "to;", "", "ook")))
+                         self.fmt.clean_lines(("ala", "ma  {", "kota", "}", "to;", "", "ook")))
 
         self.assertEqual(["ala", "ma", "{", "{", "kota", "}", "to", "}", "ook"],
-                         clean_lines(("ala", "ma  {{", "kota", "}", "to}", "ook")))
+                         self.fmt.clean_lines(("ala", "ma  {{", "kota", "}", "to}", "ook")))
 
         self.assertEqual(["{", "ala", "ma", "{", "{", "kota", "}", "to", "}"],
-                         clean_lines(("{", "ala  ", "ma  {{", "  kota ", "}", " to} ")))
+                         self.fmt.clean_lines(("{", "ala  ", "ma  {{", "  kota ", "}", " to} ")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
-                         clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
+                         self.fmt.clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "rewrite /([\d]{2}) /up/$1.html last;", "}", "to", "}"],
-                         clean_lines(
+                         self.fmt.clean_lines(
                              ("{", "ala  ", "# ma  {{", "  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "aa last;", "bb to;", "}"],
-                         clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
+                         self.fmt.clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
 
         self.assertEqual(["{", "aa;", "b b \"cc;   dd; ee \";", "ssss;", "}"],
-                         clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
+                         self.fmt.clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
 
-        self.assertEqual(["location ~ /\.ht", "{"], clean_lines(["location ~ /\.ht {", ]))
+        self.assertEqual(["location ~ /\.ht", "{"], self.fmt.clean_lines(["location ~ /\.ht {", ]))
 
     def test_perform_indentation(self):
         self.assertEqual([
             "foo bar {",
             "    fizz bazz;",
-            "}"], perform_indentation(("foo bar {", "fizz bazz;", "}")))
+            "}"], self.fmt._perform_indentation(("foo bar {", "fizz bazz;", "}")))
 
         self.assertEqual([
             "foo bar {",
@@ -61,7 +67,7 @@ class TestFormatter(unittest.TestCase):
             "        lorem ipsum;",
             "        asdf asdf;",
             "    }",
-            "}"], perform_indentation(("foo bar {", "fizz bazz {", "lorem ipsum;", "asdf asdf;", "}", "}")))
+            "}"], self.fmt._perform_indentation(("foo bar {", "fizz bazz {", "lorem ipsum;", "asdf asdf;", "}", "}")))
 
         self.assertEqual([
             "foo bar {",
@@ -71,7 +77,8 @@ class TestFormatter(unittest.TestCase):
             "    }",
             "}",
             "}",
-            "foo {"], perform_indentation(("foo bar {", "fizz bazz {", "lorem ipsum;", "# }", "}", "}", "}", "foo {")))
+            "foo {"],
+            self.fmt._perform_indentation(("foo bar {", "fizz bazz {", "lorem ipsum;", "# }", "}", "}", "}", "foo {")))
 
         self.assertEqual([
             "foo bar {",
@@ -80,32 +87,34 @@ class TestFormatter(unittest.TestCase):
             "    }",
             "}",
             "}",
-            "foo {"], perform_indentation(("foo bar {", "fizz bazz {", "lorem ipsum;", "}", "}", "}", "foo {")))
+            "foo {"],
+            self.fmt._perform_indentation(("foo bar {", "fizz bazz {", "lorem ipsum;", "}", "}", "}", "foo {")))
 
     def test_strip_line(self):
-        self.assertEqual("foo", strip_line("  foo  "))
-        self.assertEqual("bar foo", strip_line("   bar   foo  "))
-        self.assertEqual("bar foo", strip_line("   bar \t  foo  "))
-        self.assertEqual('lorem ipsum " foo  bar zip "', strip_line('  lorem   ipsum   " foo  bar zip " '))
+        self.assertEqual("foo", self.fmt._strip_line("  foo  "))
+        self.assertEqual("bar foo", self.fmt._strip_line("   bar   foo  "))
+        self.assertEqual("bar foo", self.fmt._strip_line("   bar \t  foo  "))
+        self.assertEqual('lorem ipsum " foo  bar zip "', self.fmt._strip_line('  lorem   ipsum   " foo  bar zip " '))
         self.assertEqual('lorem ipsum " foo  bar zip " or "  dd aa  " mi',
-                         strip_line('  lorem   ipsum   " foo  bar zip "  or \t "  dd aa  "  mi'))
+                         self.fmt._strip_line('  lorem   ipsum   " foo  bar zip "  or \t "  dd aa  "  mi'))
 
     def test_apply_bracket_template_tags(self):
-        self.assertEqual("\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"".splitlines(),
-                         apply_bracket_template_tags("\"aaa{dd}bbb\"".splitlines()))
+        self.assertEqual(
+            "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"".splitlines(),
+            self.fmt.apply_bracket_template_tags("\"aaa{dd}bbb\"".splitlines()))
         self.assertEqual(
             "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"".splitlines(),
-            apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines()))
+            self.fmt.apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines()))
 
     def test_strip_bracket_template_tags(self):
-        self.assertEqual("\"aaa{dd}bbb\"", strip_bracket_template_tags(
+        self.assertEqual("\"aaa{dd}bbb\"", self.fmt.strip_bracket_template_tags(
             "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\""))
-        self.assertEqual("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines(), apply_bracket_template_tags(
+        self.assertEqual("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines(), self.fmt.apply_bracket_template_tags(
             "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"".splitlines()))
 
     def test_variable_template_tags(self):
         self.assertEqual("foo bar ___TEMPLATE_VARIABLE_OPENING_TAG___myvar___TEMPLATE_VARIABLE_CLOSING_TAG___",
-                         apply_variable_template_tags("foo bar ${myvar}"))
+                         self.fmt.apply_variable_template_tags("foo bar ${myvar}"))
         self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet")
         self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet\nother $var and ${var_name2}")
 
@@ -212,18 +221,18 @@ class TestFormatter(unittest.TestCase):
                                '}\n')
 
     def test_loading_utf8_file(self):
-        tmp_file = tempfile.mkstemp('utf-8')[1]
+        tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
         shutil.copy('test-files/umlaut-utf8.conf', tmp_file)
-        format_config_file(tmp_file, verbose=True)
+        self.fmt.format_file(tmp_file)
         # todo perform some tests on result file
-        os.unlink(tmp_file)
+        tmp_file.unlink()
 
     def test_loading_latin1_file(self):
-        tmp_file = tempfile.mkstemp('latin1')[1]
+        tmp_file = pathlib.Path(tempfile.mkstemp('latin1')[1])
         shutil.copy('test-files/umlaut-latin1.conf', tmp_file)
-        format_config_file(tmp_file, verbose=True)
+        self.fmt.format_file(tmp_file)
         # todo perform some tests on result file
-        os.unlink(tmp_file)
+        tmp_file.unlink()
 
 
 if __name__ == '__main__':
