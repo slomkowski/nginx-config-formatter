@@ -24,7 +24,10 @@ class TestFormatter(unittest.TestCase):
 
     def _check_variable_tags_symmetry(self, text):
         self.assertMultiLineEqual(text,
-                                  self.fmt.strip_variable_template_tags(self.fmt.apply_variable_template_tags(text)))
+                                  self.fmt._strip_variable_template_tags(self.fmt._apply_variable_template_tags(text)))
+
+    def test_collapse_variable1(self):
+        self._check_formatting("   lorem ipsum ${ dol   } amet", "lorem ipsum ${dol} amet\n")
 
     def test_join_opening_parenthesis(self):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
@@ -32,28 +35,28 @@ class TestFormatter(unittest.TestCase):
 
     def test_clean_lines(self):
         self.assertEqual(["ala", "ma", "{", "kota", "}", "to;", "", "ook"],
-                         self.fmt.clean_lines(("ala", "ma  {", "kota", "}", "to;", "", "ook")))
+                         self.fmt._clean_lines(("ala", "ma  {", "kota", "}", "to;", "", "ook")))
 
         self.assertEqual(["ala", "ma", "{", "{", "kota", "}", "to", "}", "ook"],
-                         self.fmt.clean_lines(("ala", "ma  {{", "kota", "}", "to}", "ook")))
+                         self.fmt._clean_lines(("ala", "ma  {{", "kota", "}", "to}", "ook")))
 
         self.assertEqual(["{", "ala", "ma", "{", "{", "kota", "}", "to", "}"],
-                         self.fmt.clean_lines(("{", "ala  ", "ma  {{", "  kota ", "}", " to} ")))
+                         self.fmt._clean_lines(("{", "ala  ", "ma  {{", "  kota ", "}", " to} ")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "kota", "}", "to", "}", "# }"],
-                         self.fmt.clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
+                         self.fmt._clean_lines(("{", "ala  ", "# ma  {{", "  kota ", "}", " to} ", "# }")))
 
-        self.assertEqual(["{", "ala", "# ma  {{", "rewrite /([\d]{2}) /up/$1.html last;", "}", "to", "}"],
-                         self.fmt.clean_lines(
-                             ("{", "ala  ", "# ma  {{", "  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
+        self.assertEqual(["{", "ala", "# ma  {{", r"rewrite /([\d]{2}) /up/$1.html last;", "}", "to", "}"],
+                         self.fmt._clean_lines(
+                             ("{", "ala  ", "# ma  {{", r"  rewrite /([\d]{2}) /up/$1.html last;  ", "}", " to", "}")))
 
         self.assertEqual(["{", "ala", "# ma  {{", "aa last;", "bb to;", "}"],
-                         self.fmt.clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
+                         self.fmt._clean_lines(("{", "ala  ", "# ma  {{", " aa last;  bb  to; ", "}")))
 
         self.assertEqual(["{", "aa;", "b b \"cc;   dd; ee \";", "ssss;", "}"],
-                         self.fmt.clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
+                         self.fmt._clean_lines(("{", "aa; b  b \"cc;   dd; ee \"; ssss;", "}")))
 
-        self.assertEqual(["location ~ /\.ht", "{"], self.fmt.clean_lines(["location ~ /\.ht {", ]))
+        self.assertEqual([r"location ~ /\.ht", "{"], self.fmt._clean_lines([r"location ~ /\.ht {", ]))
 
     def test_perform_indentation(self):
         self.assertEqual([
@@ -101,20 +104,23 @@ class TestFormatter(unittest.TestCase):
     def test_apply_bracket_template_tags(self):
         self.assertEqual(
             "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"".splitlines(),
-            self.fmt.apply_bracket_template_tags("\"aaa{dd}bbb\"".splitlines()))
+            self.fmt._apply_bracket_template_tags("\"aaa{dd}bbb\"".splitlines()))
         self.assertEqual(
             "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"".splitlines(),
-            self.fmt.apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines()))
+            self.fmt._apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines()))
 
-    def test_strip_bracket_template_tags(self):
-        self.assertEqual("\"aaa{dd}bbb\"", self.fmt.strip_bracket_template_tags(
+    def test_strip_bracket_template_tags1(self):
+        self.assertEqual("\"aaa{dd}bbb\"", self.fmt._strip_bracket_template_tags(
             "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\""))
-        self.assertEqual("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines(), self.fmt.apply_bracket_template_tags(
-            "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"".splitlines()))
+
+    def test_apply_bracket_template_tags1(self):
+        self.assertEqual(
+            "\"aaa___TEMPLATE_BRACKET_OPENING_TAG___dd___TEMPLATE_BRACKET_CLOSING_TAG___bbb\"cc{cc}cc\"dddd___TEMPLATE_BRACKET_OPENING_TAG___eee___TEMPLATE_BRACKET_CLOSING_TAG___fff\"".splitlines(),
+            self.fmt._apply_bracket_template_tags("\"aaa{dd}bbb\"cc{cc}cc\"dddd{eee}fff\"".splitlines()))
 
     def test_variable_template_tags(self):
         self.assertEqual("foo bar ___TEMPLATE_VARIABLE_OPENING_TAG___myvar___TEMPLATE_VARIABLE_CLOSING_TAG___",
-                         self.fmt.apply_variable_template_tags("foo bar ${myvar}"))
+                         self.fmt._apply_variable_template_tags("foo bar ${myvar}"))
         self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet")
         self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet\nother $var and ${var_name2}")
 
@@ -168,7 +174,7 @@ class TestFormatter(unittest.TestCase):
             "    }\n" +
             "}\n")
 
-    def test_template_variables_with_dollars(self):
+    def test_template_variables_with_dollars1(self):
         self._check_formatting('server {\n' +
                                '   # commented ${line} should not be touched\n' +
                                'listen 80 default_server;\n' +
@@ -183,19 +189,20 @@ class TestFormatter(unittest.TestCase):
                                '    listen 80 default_server;\n' +
                                '    server_name localhost;\n' +
                                '    location / {\n' +
-                               '        proxy_set_header X-User-Auth "In ${cookie_access_token} ${other}";\n' +
+                               '        proxy_set_header X-User-Auth "In ${cookie_access_token} ${ other}";\n' +
                                '        proxy_set_header X-User-Other "foo ${bar}";\n' +
                                '    }\n' +
                                '}\n')
 
-        self._check_formatting(' some_tag { with_templates "my ${var} and other ${ variable_name   }  "; }\n' +
+    def test_template_variables_with_dollars2(self):
+        self._check_formatting(' some_tag { with_templates "my ${var} and other ${ invalid_variable_use   }  "; }\n' +
                                '# in my line\n',
                                'some_tag {\n' +
-                               '    with_templates "my ${var} and other ${variable_name}  ";\n' +
+                               '    with_templates "my ${var} and other ${ invalid_variable_use   }  ";\n' +
                                '}\n' +
                                '# in my line\n')
 
-    def test_backslash(self):
+    def test_backslash3(self):
         self._check_formatting('location ~ /\.ht {\n' +
                                'deny all;\n' +
                                '}',
@@ -203,12 +210,18 @@ class TestFormatter(unittest.TestCase):
                                '    deny all;\n' +
                                '}\n')
 
-        self._check_formatting(' tag { wt  ~  /\.ht \t "my ${var} and  ~  /\.ht \tother ${ variable_name   }  "; }\n' +
-                               '# in my line\n',
-                               'tag {\n' +
-                               '    wt ~ /\.ht "my ${var} and  ~  /\.ht \tother ${variable_name}  ";\n' +
-                               '}\n' +
-                               '# in my line\n')
+    def test_backslash2(self):
+        """If curly braces are withing quotation marks, we treat them as part of the string, not syntax structure.
+        Writing '${ var }' is not valid in nginx anyway, so we slip collapsing these altogether. May be changed in
+        the future. """
+        self._check_formatting(
+            ' tag { wt  ~  /\.ht \t "my ${some some} and  ~  /\.ht \tother ${comething in  curly braces  }  "; }\n' +
+            '# in my line\n',
+
+            'tag {\n' +
+            '    wt ~ /\.ht "my ${some some} and  ~  /\.ht \tother ${comething in  curly braces  }  ";\n' +
+            '}\n' +
+            '# in my line\n')
 
     def test_multi_semicolon(self):
         self._check_formatting('location /a { \n' +
