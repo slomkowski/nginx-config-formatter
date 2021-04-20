@@ -214,25 +214,26 @@ class Formatter:
             line = self._apply_variable_template_tags(line)
             if line == "":
                 cleaned_lines.append("")
-                continue
+            elif line == "};":
+                cleaned_lines.append("}")
+            elif line.startswith("#"):
+                cleaned_lines.append(self._strip_variable_template_tags(line))
             else:
-                if line.startswith("#"):
-                    cleaned_lines.append(self._strip_variable_template_tags(line))
+                q, c = self._count_multi_semicolon(line)
+                if q == 1 and c > 1:
+                    ml = self._multi_semicolon(line)
+                    cleaned_lines.extend(self._clean_lines(ml.splitlines()))
+                elif q != 1 and c > 1:
+                    newlines = line.split(";")
+                    lines_to_add = self._clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""])
+                    cleaned_lines.extend(lines_to_add)
                 else:
-                    q, c = self._count_multi_semicolon(line)
-                    if q == 1 and c > 1:
-                        ml = self._multi_semicolon(line)
-                        cleaned_lines.extend(self._clean_lines(ml.splitlines()))
-                    elif q != 1 and c > 1:
-                        newlines = line.split(";")
-                        cleaned_lines.extend(self._clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""]))
+                    if line.startswith("rewrite"):
+                        cleaned_lines.append(self._strip_variable_template_tags(line))
                     else:
-                        if line.startswith("rewrite"):
-                            cleaned_lines.append(self._strip_variable_template_tags(line))
-                        else:
-                            cleaned_lines.extend(
-                                [self._strip_variable_template_tags(ln).strip() for ln in re.split(r"([{}])", line) if
-                                 ln != ""])
+                        cleaned_lines.extend(
+                            [self._strip_variable_template_tags(ln).strip() for ln in re.split(r"([{}])", line) if
+                             ln != ""])
         return cleaned_lines
 
     @staticmethod

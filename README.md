@@ -6,8 +6,7 @@ way, described below:
 * all lines are indented in uniform manner, with 4 spaces per level
 * neighbouring empty lines are collapsed to at most two empty lines
 * curly braces placement follows Java convention
-* whitespaces are collapsed, except in comments an quotation marks
-* whitespaces in variable designators are removed: `${  my_variable }` is collapsed to `${my_variable}`
+* whitespaces are collapsed, except in comments and quotation marks
 
 ## Installation
 
@@ -38,6 +37,16 @@ optional arguments:
   -b, --backup-original
                         backup original config file
 ```
+
+## Reporting bugs
+
+Please create issue under https://github.com/slomkowski/nginx-config-formatter/issues.
+Be sure to add config snippets to reproduce the issue, preferably:
+
+* snippet do be formatted
+* actual result with invalid formatting
+* desired result
+
 
 ## Credits
 

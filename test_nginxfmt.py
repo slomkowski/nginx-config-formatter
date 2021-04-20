@@ -19,15 +19,18 @@ class TestFormatter(unittest.TestCase):
         super().__init__(method_name)
         logging.basicConfig(level=logging.DEBUG)  # todo fix logging in debug
 
-    def _check_formatting(self, original_text: str, formatted_text: str):
+    def check_formatting(self, original_text: str, formatted_text: str):
         self.assertMultiLineEqual(formatted_text, self.fmt.format_string(original_text))
+
+    def check_stays_the_same(self, text: str):
+        self.assertMultiLineEqual(text, self.fmt.format_string(text))
 
     def _check_variable_tags_symmetry(self, text):
         self.assertMultiLineEqual(text,
                                   self.fmt._strip_variable_template_tags(self.fmt._apply_variable_template_tags(text)))
 
     def test_collapse_variable1(self):
-        self._check_formatting("   lorem ipsum ${ dol   } amet", "lorem ipsum ${dol} amet\n")
+        self.check_formatting("   lorem ipsum ${ dol   } amet", "lorem ipsum ${dol} amet\n")
 
     def test_join_opening_parenthesis(self):
         self.assertEqual(["foo", "bar {", "johan {", "tee", "ka", "}"],
@@ -125,7 +128,7 @@ class TestFormatter(unittest.TestCase):
         self._check_variable_tags_symmetry("lorem ipsum ${dolor} $amet\nother $var and ${var_name2}")
 
     def test_umlaut_in_string(self):
-        self._check_formatting(
+        self.check_formatting(
             "# Statusseite für Monitoring freigeben \n" +
             "# line above contains german umlaut causing problems \n" +
             "location /nginx_status {\n" +
@@ -145,7 +148,7 @@ class TestFormatter(unittest.TestCase):
         )
 
     def test_empty_lines_removal(self):
-        self._check_formatting(
+        self.check_formatting(
             "\n  foo bar {\n" +
             "       lorem ipsum;\n" +
             "}\n\n\n",
@@ -153,7 +156,7 @@ class TestFormatter(unittest.TestCase):
             "    lorem ipsum;\n" +
             "}\n")
 
-        self._check_formatting(
+        self.check_formatting(
             "\n  foo bar {\n\n\n\n\n\n" +
             "       lorem ipsum;\n" +
             "}\n\n\n",
@@ -161,7 +164,7 @@ class TestFormatter(unittest.TestCase):
             "    lorem ipsum;\n" +
             "}\n")
 
-        self._check_formatting(
+        self.check_formatting(
             "  foo bar {\n" +
             "       lorem ipsum;\n" +
             " kee {\n" +
@@ -175,46 +178,46 @@ class TestFormatter(unittest.TestCase):
             "}\n")
 
     def test_template_variables_with_dollars1(self):
-        self._check_formatting('server {\n' +
-                               '   # commented ${line} should not be touched\n' +
-                               'listen 80 default_server;\n' +
-                               'server_name localhost;\n' +
-                               'location / {\n' +
-                               'proxy_set_header X-User-Auth "In ${cookie_access_token} ${ other}";\n' +
-                               'proxy_set_header X-User-Other "foo ${bar}";\n' +
-                               '}\n' +
-                               '}',
-                               'server {\n' +
-                               '    # commented ${line} should not be touched\n' +
-                               '    listen 80 default_server;\n' +
-                               '    server_name localhost;\n' +
-                               '    location / {\n' +
-                               '        proxy_set_header X-User-Auth "In ${cookie_access_token} ${ other}";\n' +
-                               '        proxy_set_header X-User-Other "foo ${bar}";\n' +
-                               '    }\n' +
-                               '}\n')
+        self.check_formatting('server {\n' +
+                              '   # commented ${line} should not be touched\n' +
+                              'listen 80 default_server;\n' +
+                              'server_name localhost;\n' +
+                              'location / {\n' +
+                              'proxy_set_header X-User-Auth "In ${cookie_access_token} ${ other}";\n' +
+                              'proxy_set_header X-User-Other "foo ${bar}";\n' +
+                              '}\n' +
+                              '}',
+                              'server {\n' +
+                              '    # commented ${line} should not be touched\n' +
+                              '    listen 80 default_server;\n' +
+                              '    server_name localhost;\n' +
+                              '    location / {\n' +
+                              '        proxy_set_header X-User-Auth "In ${cookie_access_token} ${ other}";\n' +
+                              '        proxy_set_header X-User-Other "foo ${bar}";\n' +
+                              '    }\n' +
+                              '}\n')
 
     def test_template_variables_with_dollars2(self):
-        self._check_formatting(' some_tag { with_templates "my ${var} and other ${ invalid_variable_use   }  "; }\n' +
-                               '# in my line\n',
-                               'some_tag {\n' +
-                               '    with_templates "my ${var} and other ${ invalid_variable_use   }  ";\n' +
-                               '}\n' +
-                               '# in my line\n')
+        self.check_formatting(' some_tag { with_templates "my ${var} and other ${ invalid_variable_use   }  "; }\n' +
+                              '# in my line\n',
+                              'some_tag {\n' +
+                              '    with_templates "my ${var} and other ${ invalid_variable_use   }  ";\n' +
+                              '}\n' +
+                              '# in my line\n')
 
     def test_backslash3(self):
-        self._check_formatting('location ~ /\.ht {\n' +
-                               'deny all;\n' +
-                               '}',
-                               'location ~ /\.ht {\n' +
-                               '    deny all;\n' +
-                               '}\n')
+        self.check_formatting('location ~ /\.ht {\n' +
+                              'deny all;\n' +
+                              '}',
+                              'location ~ /\.ht {\n' +
+                              '    deny all;\n' +
+                              '}\n')
 
     def test_backslash2(self):
         """If curly braces are withing quotation marks, we treat them as part of the string, not syntax structure.
         Writing '${ var }' is not valid in nginx anyway, so we slip collapsing these altogether. May be changed in
         the future. """
-        self._check_formatting(
+        self.check_formatting(
             ' tag { wt  ~  /\.ht \t "my ${some some} and  ~  /\.ht \tother ${comething in  curly braces  }  "; }\n' +
             '# in my line\n',
 
@@ -224,14 +227,14 @@ class TestFormatter(unittest.TestCase):
             '# in my line\n')
 
     def test_multi_semicolon(self):
-        self._check_formatting('location /a { \n' +
-                               'allow   127.0.0.1; allow  10.0.0.0/8; deny all; \n' +
-                               '}\n',
-                               'location /a {\n' +
-                               '    allow 127.0.0.1;\n' +
-                               '    allow 10.0.0.0/8;\n' +
-                               '    deny all;\n' +
-                               '}\n')
+        self.check_formatting('location /a { \n' +
+                              'allow   127.0.0.1; allow  10.0.0.0/8; deny all; \n' +
+                              '}\n',
+                              'location /a {\n' +
+                              '    allow 127.0.0.1;\n' +
+                              '    allow 10.0.0.0/8;\n' +
+                              '    deny all;\n' +
+                              '}\n')
 
     def test_loading_utf8_file(self):
         tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
@@ -248,25 +251,81 @@ class TestFormatter(unittest.TestCase):
         tmp_file.unlink()
 
     def test_issue_15(self):
-        self._check_formatting(
+        self.check_formatting(
             'section { server_name "~^(?<tag>[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12})\.a\.b\.com$"; }',
             'section {\n    server_name "~^(?<tag>[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12})\.a\.b\.com$";\n}\n')
 
     def test_issue_11(self):
-        self._check_formatting("   #   3 spaces\n" +
-                               "#  2 spaces\n" +
-                               "        # 1 space",
-                               "#   3 spaces\n" +
-                               "#  2 spaces\n" +
-                               "# 1 space\n")
+        self.check_formatting("   #   3 spaces\n" +
+                              "#  2 spaces\n" +
+                              "        # 1 space",
+                              "#   3 spaces\n" +
+                              "#  2 spaces\n" +
+                              "# 1 space\n")
 
         # everything after # is left as is (except trimming trailing whitespaces)
-        self._check_formatting("""        #if (!-f $request_filename) {
+        self.check_formatting("""        #if (!-f $request_filename) {
             #  rewrite ^/static/?(.*)$ /static.php?resource=$1 last;   
         #""",
-                               "#if (!-f $request_filename) {\n" +
-                               "#  rewrite ^/static/?(.*)$ /static.php?resource=$1 last;\n" +
-                               "#\n")
+                              "#if (!-f $request_filename) {\n" +
+                              "#  rewrite ^/static/?(.*)$ /static.php?resource=$1 last;\n" +
+                              "#\n")
+
+    def test_issue_20_1(self):
+        self.check_stays_the_same("# comment 1\n" +
+                                  "tag {\n" +
+                                  "    # comment 2\n" +
+                                  "    code;\n" +
+                                  "    #     comment 3\n" +
+                                  "    subtag {\n" +
+                                  "        code;\n" +
+                                  "        #  comment 4\n" +
+                                  "        #\n" +
+                                  "    }\n" +
+                                  "    #  comment 5\n" +
+                                  "}\n")
+
+    def test_issue_20_2(self):
+        self.check_formatting(
+            "location /nginx_status {\n" +
+            "# Don't break \n" +
+            "    stub_status on;\n" +
+            "  access_log off;\n" +
+            "  allow 127.0.0.1;\n" +
+            "      deny all;\n" +
+            "}",
+            "location /nginx_status {\n" +
+            "    # Don't break\n" +
+            "    stub_status on;\n" +
+            "    access_log off;\n" +
+            "    allow 127.0.0.1;\n" +
+            "    deny all;\n" +
+            "}\n"
+        )
+        self.check_formatting(
+            "location /nginx_status {\n" +
+            "# Don\"t break \n" +
+            "    stub_status on;\n" +
+            "  access_log off;\n" +
+            "  allow 127.0.0.1;\n" +
+            "      deny all;\n" +
+            "}",
+            "location /nginx_status {\n" +
+            "    # Don\"t break\n" +
+            "    stub_status on;\n" +
+            "    access_log off;\n" +
+            "    allow 127.0.0.1;\n" +
+            "    deny all;\n" +
+            "}\n"
+        )
+
+    def test_issue_16(self):
+        self.check_formatting(
+            "location /example { allow 192.168.0.0/16; deny all; }",
+            "location /example {\n"
+            "    allow 192.168.0.0/16;\n"
+            "    deny all;\n"
+            "}\n")
 
 
 if __name__ == '__main__':
