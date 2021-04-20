@@ -1,7 +1,6 @@
 # *nginx* config file formatter
 
-This Python script formats *nginx* configuration files in consistent
-way, described below:
+This Python script formats *nginx* configuration files in consistent way, described below:
 
 * all lines are indented in uniform manner, with 4 spaces per level
 * neighbouring empty lines are collapsed to at most two empty lines
@@ -10,8 +9,8 @@ way, described below:
 
 ## Installation
 
-Python 3.4 or later is needed to run this program. The simplest form
-of installation would be copying `nginxfmt.py` to your scripts directory.
+Python 3.4 or later is needed to run this program. The simplest form of installation would be copying `nginxfmt.py` to
+your scripts directory.
 
 You can also clone the repository and symlink the executable:
 
@@ -24,9 +23,9 @@ ln -s ~/nginx-config-formatter/nginxfmt.py ~/bin/nginxfmt.py
 ## Usage
 
 ```
-usage: nginxfmt.py [-h] [-v] [-b] config_files [config_files ...]
+usage: nginxfmt [-h] [-v] [-p | -b] [-i INDENT] config_files [config_files ...]
 
-Script formats nginx configuration file.
+Formats nginx configuration files in consistent way.
 
 positional arguments:
   config_files          configuration files to format
@@ -34,19 +33,55 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -v, --verbose         show formatted file names
+  -p, --print-result    prints result to stdout, original file is not changed
   -b, --backup-original
                         backup original config file
+
+formatting options:
+  -i INDENT, --indent INDENT
+                        specify number of spaces for indentation
+```
+
+## Using as library
+
+Main logic is within `Formatter` class, which can be used in 3rd-party code.
+
+```python
+import nginxfmt
+
+# initializing with standard FormatterOptions
+f = nginxfmt.Formatter()
+
+# format from string
+formatted_text = f.format_string(unformatted_text)
+
+# format file and save result to the same file
+f.format_file(unformatted_file_path)
+
+# format file and save result to the same file, original unformatted content is backed up
+f.format_file(unformatted_file_path, backup_path)
+```
+
+Customizing formatting options:
+
+```python
+import nginxfmt
+
+fo = nginxfmt.FormatterOptions()
+fo.indentation = 2  # 2 spaces instead of default 4
+
+# initializing with standard FormatterOptions
+f = nginxfmt.Formatter(fo)
 ```
 
 ## Reporting bugs
 
-Please create issue under https://github.com/slomkowski/nginx-config-formatter/issues.
-Be sure to add config snippets to reproduce the issue, preferably:
+Please create issue under https://github.com/slomkowski/nginx-config-formatter/issues. Be sure to add config snippets to
+reproduce the issue, preferably:
 
 * snippet do be formatted
 * actual result with invalid formatting
 * desired result
-
 
 ## Credits
 
