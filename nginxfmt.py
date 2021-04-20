@@ -318,6 +318,10 @@ def _standalone_run(program_arguments):
     with _redirect_stdout_to_stderr():
         args = arg_parser.parse_args(program_arguments)
 
+    logging.basicConfig(
+        level=logging.INFO if args.verbose else logging.ERROR,
+        format='%(levelname)s: %(message)s')
+
     try:
         if args.print_result and len(args.config_files) != 1:
             raise Exception("if %s is enabled, only one file can be passed as input" % argparse._get_action_name(
