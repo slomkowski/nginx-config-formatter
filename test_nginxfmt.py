@@ -327,6 +327,24 @@ class TestFormatter(unittest.TestCase):
             "    deny all;\n"
             "}\n")
 
+    def test_issue_9(self):
+        self.check_formatting(
+            (
+                """http {\n"""
+                """    log_format le_json '{"time":"$time_iso8601", '\n"""
+                """    '"client_agent":"$client_agent",\n"""
+                """    '"user_agent":"$http_user_agent"}';\n"""
+                """}\n"""
+            ),
+            (
+                """http {\n"""
+                """    log_format le_json '{"time":"$time_iso8601", '\n"""
+                """    '"client_agent":"$client_agent",\n"""
+                """    '"user_agent":"$http_user_agent"}';\n"""
+                """}\n"""
+            ),
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
