@@ -247,6 +247,27 @@ class TestFormatter(unittest.TestCase):
         # todo perform some tests on result file
         tmp_file.unlink()
 
+    def test_issue_15(self):
+        self._check_formatting(
+            'section { server_name "~^(?<tag>[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12})\.a\.b\.com$"; }',
+            'section {\n    server_name "~^(?<tag>[0-9a-f]{8}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{4}\-[0-9a-f]{12})\.a\.b\.com$";\n}\n')
+
+    def test_issue_11(self):
+        self._check_formatting("   #   3 spaces\n" +
+                               "#  2 spaces\n" +
+                               "        # 1 space",
+                               "#   3 spaces\n" +
+                               "#  2 spaces\n" +
+                               "# 1 space\n")
+
+        # everything after # is left as is (except trimming trailing whitespaces)
+        self._check_formatting("""        #if (!-f $request_filename) {
+            #  rewrite ^/static/?(.*)$ /static.php?resource=$1 last;   
+        #""",
+                               "#if (!-f $request_filename) {\n" +
+                               "#  rewrite ^/static/?(.*)$ /static.php?resource=$1 last;\n" +
+                               "#\n")
+
 
 if __name__ == '__main__':
     unittest.main()
