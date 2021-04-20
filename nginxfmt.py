@@ -9,24 +9,26 @@ then moved to https://github.com/slomkowski/nginx-config-formatter.
 
 import argparse
 import codecs
+import contextlib
 import dataclasses
 import logging
 import pathlib
 import re
+import sys
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
 __version__ = "1.2.0-SNAPSHOT"
 
-"""Class holds the formatting options. For now, only indentation supported."""
-
 
 @dataclasses.dataclass
 class FormatterOptions:
+    """Class holds the formatting options. For now, only indentation supported."""
     indentation: int = 4
 
 
 class Formatter:
+    """nginx formatter. Can format config loaded from file or string."""
     _TEMPLATE_VARIABLE_OPENING_TAG = '___TEMPLATE_VARIABLE_OPENING_TAG___'
     _TEMPLATE_VARIABLE_CLOSING_TAG = '___TEMPLATE_VARIABLE_CLOSING_TAG___'
 
@@ -56,16 +58,39 @@ class Formatter:
 
         return text + '\n'
 
+    def get_formatted_string_from_file(self,
+                                       file_path: pathlib.Path) -> str:
+        """Loads nginx config from file, performs formatting and returns contents as string.
+        :param file_path: path to original nginx configuration file."""
+
+        _, original_file_content = self._load_file_content(file_path)
+        return self.format_string(original_file_content)
+
     def format_file(self,
                     file_path: pathlib.Path,
                     original_backup_file_path: pathlib.Path = None):
-        """
-        Performs the formatting on the given file. The function tries to detect file encoding first.
+        """Performs the formatting on the given file. The function tries to detect file encoding first.
         :param file_path: path to original nginx configuration file. This file will be overridden.
-        :param original_backup_file_path: optional path, where original file will be backed up.
-        """
-        encodings = ('utf-8', 'latin1')
+        :param original_backup_file_path: optional path, where original file will be backed up."""
 
+        chosen_encoding, original_file_content = self._load_file_content(file_path)
+
+        with codecs.open(file_path, 'w', encoding=chosen_encoding) as wfp:
+            wfp.write(self.format_string(original_file_content))
+
+        self.logger.info("Formatted content written to original file.")
+
+        if original_backup_file_path:
+            with codecs.open(original_backup_file_path, 'w', encoding=chosen_encoding) as wfp:
+                wfp.write(original_file_content)
+            self.logger.info("Previous content saved to '%s'.", original_backup_file_path)
+
+    def _load_file_content(self,
+                           file_path: pathlib.Path) -> (str, str):
+        """Determines the encoding of the input file and loads its content to string.
+        :param file_path: path to original nginx configuration file."""
+
+        encodings = ('utf-8', 'latin1')
         encoding_failures = []
         chosen_encoding = None
         original_file_content = None
@@ -83,17 +108,10 @@ class Formatter:
             raise Exception('none of encodings %s are valid for file %s. Errors: %s'
                             % (encodings, file_path, [e.message for e in encoding_failures]))
 
+        self.logger.info("Loaded file '%s' (detected encoding %s).", file_path, chosen_encoding)
+
         assert original_file_content is not None
-
-        with codecs.open(file_path, 'w', encoding=chosen_encoding) as wfp:
-            wfp.write(self.format_string(original_file_content))
-
-        self.logger.info("Formatted file '%s' (detected encoding %s).", file_path, chosen_encoding)
-
-        if original_backup_file_path:
-            with codecs.open(original_backup_file_path, 'w', encoding=chosen_encoding) as wfp:
-                wfp.write(original_file_content)
-            self.logger.info("Original saved to '%s'.", original_backup_file_path)
+        return chosen_encoding, original_file_content
 
     @staticmethod
     def _strip_line(single_line):
@@ -267,24 +285,57 @@ class Formatter:
         return indented_lines
 
 
-if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser(description=__doc__)
+@contextlib.contextmanager
+def _redirect_stdout_to_stderr():
+    """Redirects stdout to stderr for argument parsing. This is to don't pollute the stdout
+    when --print-result is used."""
+    old_stdout = sys.stdout
+    sys.stdout = sys.stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
 
+
+def _standalone_run(program_arguments):
     # todo add logger: logs to stderr
-    # option to format from stdin
+
+    arg_parser = argparse.ArgumentParser(description="Formats nginx configuration files in consistent way.")
 
     arg_parser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
-    arg_parser.add_argument("-b", "--backup-original", action="store_true", help="backup original config file")
-    arg_parser.add_argument("-i", "--indent", action="store", default=4, type=int,
-                            help="specify number of spaces for indentation")
+
+    backup_xor_print_group = arg_parser.add_mutually_exclusive_group()
+    print_result_action = backup_xor_print_group.add_argument("-p", "--print-result", action="store_true",
+                                                              help="prints result to stdout, original file is not changed")
+    backup_xor_print_group.add_argument("-b", "--backup-original", action="store_true",
+                                        help="backup original config file")
     arg_parser.add_argument("config_files", nargs='+', help="configuration files to format")
 
-    args = arg_parser.parse_args()
+    formatter_options_group = arg_parser.add_argument_group("formatting options")
+    formatter_options_group.add_argument("-i", "--indent", action="store", default=4, type=int,
+                                         help="specify number of spaces for indentation")
+
+    with _redirect_stdout_to_stderr():
+        args = arg_parser.parse_args(program_arguments)
+
+    try:
+        if args.print_result and len(args.config_files) != 1:
+            raise Exception("if %s is enabled, only one file can be passed as input" % argparse._get_action_name(
+                print_result_action))
+    except Exception as e:
+        arg_parser.error(str(e))
 
     format_options = FormatterOptions()
     format_options.indentation = args.indent
     formatter = Formatter(format_options)
 
-    for config_file_path in args.config_files:
-        backup_file_path = config_file_path + '~' if args.backup_original else None
-        formatter.format_file(config_file_path, backup_file_path)
+    if args.print_result:
+        print(formatter.get_formatted_string_from_file(args.config_files[0]))
+    else:
+        for config_file_path in args.config_files:
+            backup_file_path = config_file_path + '~' if args.backup_original else None
+            formatter.format_file(config_file_path, backup_file_path)
+
+
+if __name__ == "__main__":
+    _standalone_run(sys.argv[1:])

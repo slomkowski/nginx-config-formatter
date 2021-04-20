@@ -2,18 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """Unit tests for nginxfmt module."""
+import contextlib
+import logging
+import pathlib
 import shutil
 import tempfile
 import unittest
 
-from nginxfmt import *
+import nginxfmt
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
 
 
 class TestFormatter(unittest.TestCase):
-    fmt = Formatter()
+    fmt = nginxfmt.Formatter()
 
     def __init__(self, method_name: str = ...) -> None:
         super().__init__(method_name)
@@ -238,17 +241,21 @@ class TestFormatter(unittest.TestCase):
 
     def test_loading_utf8_file(self):
         tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
-        shutil.copy('test-files/umlaut-utf8.conf', tmp_file)
-        self.fmt.format_file(tmp_file)
-        # todo perform some tests on result file
-        tmp_file.unlink()
+        try:
+            shutil.copy('test-files/umlaut-utf8.conf', tmp_file)
+            self.fmt.format_file(tmp_file)
+            # todo perform some tests on result file
+        finally:
+            tmp_file.unlink()
 
     def test_loading_latin1_file(self):
         tmp_file = pathlib.Path(tempfile.mkstemp('latin1')[1])
-        shutil.copy('test-files/umlaut-latin1.conf', tmp_file)
-        self.fmt.format_file(tmp_file)
-        # todo perform some tests on result file
-        tmp_file.unlink()
+        try:
+            shutil.copy('test-files/umlaut-latin1.conf', tmp_file)
+            self.fmt.format_file(tmp_file)
+            # todo perform some tests on result file
+        finally:
+            tmp_file.unlink()
 
     def test_issue_15(self):
         self.check_formatting(
@@ -344,6 +351,35 @@ class TestFormatter(unittest.TestCase):
                 """}\n"""
             ),
         )
+
+    def test_custom_indentation(self):
+        fo = nginxfmt.FormatterOptions(indentation=2)
+        fmt2 = nginxfmt.Formatter(fo)
+        self.assertMultiLineEqual("{\n"
+                                  "  foo bar;\n"
+                                  "}\n",
+                                  fmt2.format_string(
+                                      "  { \n"
+                                      "     foo    bar;\n"
+                                      "}\n"))
+
+
+class TestStandaloneRun(unittest.TestCase):
+
+    @contextlib.contextmanager
+    def input_test_file(self, file_name):
+        tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
+        try:
+            shutil.copy('test-files/' + file_name, tmp_file)
+            yield str(tmp_file)
+            # todo perform some tests on result file
+        finally:
+            tmp_file.unlink()
+
+    # todo better tests of standalone mode?
+    def test_print_result(self):
+        with self.input_test_file('not-formatted-1.conf') as input:
+            nginxfmt._standalone_run(['-p', input])
 
 
 if __name__ == '__main__':
