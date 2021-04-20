@@ -353,7 +353,8 @@ class TestFormatter(unittest.TestCase):
         )
 
     def test_custom_indentation(self):
-        fo = nginxfmt.FormatterOptions(indentation=2)
+        fo = nginxfmt.FormatterOptions()
+        fo.indentation = 2
         fmt2 = nginxfmt.Formatter(fo)
         self.assertMultiLineEqual("{\n"
                                   "  foo bar;\n"

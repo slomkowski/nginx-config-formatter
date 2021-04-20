@@ -10,14 +10,14 @@ way, described below:
 
 ## Installation
 
-Python 3.2 or later is needed to run this program. The simplest form
+Python 3.4 or later is needed to run this program. The simplest form
 of installation would be copying `nginxfmt.py` to your scripts directory.
 
 You can also clone the repository and symlink the executable:
 
 ```
 cd
-git clone https://github.com/1connect/nginx-config-formatter.git
+git clone https://github.com/slomkowski/nginx-config-formatter.git
 ln -s ~/nginx-config-formatter/nginxfmt.py ~/bin/nginxfmt.py
 ```
 
@@ -50,4 +50,4 @@ Be sure to add config snippets to reproduce the issue, preferably:
 
 ## Credits
 
-Copyright 2016 Michał Słomkowski @ 1CONNECT. License: Apache 2.0.
+Copyright 2021 Michał Słomkowski. License: Apache 2.0.

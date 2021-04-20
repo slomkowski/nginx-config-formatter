@@ -10,7 +10,6 @@ then moved to https://github.com/slomkowski/nginx-config-formatter.
 import argparse
 import codecs
 import contextlib
-import dataclasses
 import logging
 import pathlib
 import re
@@ -21,10 +20,9 @@ __license__ = "Apache 2.0"
 __version__ = "1.2.0-SNAPSHOT"
 
 
-@dataclasses.dataclass
 class FormatterOptions:
     """Class holds the formatting options. For now, only indentation supported."""
-    indentation: int = 4
+    indentation = 4
 
 
 class Formatter:
@@ -180,7 +178,7 @@ class Formatter:
                       line,
                       flags=re.UNICODE)
 
-    def _apply_bracket_template_tags(self, lines: list[str]) -> list[str]:
+    def _apply_bracket_template_tags(self, lines):
         """ Replaces bracket { and } with tags, so subsequent formatting is easier."""
         formatted_lines = []
 

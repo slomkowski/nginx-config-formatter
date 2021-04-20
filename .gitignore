@@ -138,3 +138,4 @@ dmypy.json
 .pytype/
 
 examples/
+deploy*.sh
