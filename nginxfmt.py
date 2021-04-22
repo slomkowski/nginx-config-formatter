@@ -10,6 +10,7 @@ then moved to https://github.com/slomkowski/nginx-config-formatter.
 import argparse
 import codecs
 import contextlib
+import io
 import logging
 import pathlib
 import re
@@ -81,7 +82,7 @@ class Formatter:
         if original_backup_file_path:
             with codecs.open(original_backup_file_path, 'w', encoding=chosen_encoding) as wfp:
                 wfp.write(original_file_content)
-            self.logger.info("Previous content saved to '%s'.", original_backup_file_path)
+            self.logger.info("Original content saved to '%s'.", original_backup_file_path)
 
     def _load_file_content(self,
                            file_path: pathlib.Path) -> (str, str):
@@ -295,19 +296,31 @@ def _redirect_stdout_to_stderr():
         sys.stdout = old_stdout
 
 
-def _standalone_run(program_arguments):
-    # todo add logger: logs to stderr
+def _aname(action) -> str:
+    """Converts argument name to string to be consistent with argparse."""
+    return argparse._get_action_name(action)
 
+
+def _standalone_run(program_arguments):
     arg_parser = argparse.ArgumentParser(description="Formats nginx configuration files in consistent way.")
 
     arg_parser.add_argument("-v", "--verbose", action="store_true", help="show formatted file names")
 
-    backup_xor_print_group = arg_parser.add_mutually_exclusive_group()
-    print_result_action = backup_xor_print_group.add_argument("-p", "--print-result", action="store_true",
-                                                              help="prints result to stdout, original file is not changed")
-    backup_xor_print_group.add_argument("-b", "--backup-original", action="store_true",
-                                        help="backup original config file")
-    arg_parser.add_argument("config_files", nargs='+', help="configuration files to format")
+    pipe_arg = arg_parser.add_argument("-", "--pipe",
+                                       action="store_true",
+                                       help="reads content from standard input, prints result to stdout")
+
+    pipe_xor_backup_group = arg_parser.add_mutually_exclusive_group()
+    print_result_arg = pipe_xor_backup_group.add_argument("-p", "--print-result",
+                                                          action="store_true",
+                                                          help="prints result to stdout, original file is not changed")
+    pipe_xor_backup_group.add_argument("-b", "--backup-original",
+                                       action="store_true",
+                                       help="backup original config file as filename.conf~")
+
+    arg_parser.add_argument("config_files",
+                            nargs='*',
+                            help="configuration files to format")
 
     formatter_options_group = arg_parser.add_argument_group("formatting options")
     formatter_options_group.add_argument("-i", "--indent", action="store", default=4, type=int,
@@ -321,9 +334,14 @@ def _standalone_run(program_arguments):
         format='%(levelname)s: %(message)s')
 
     try:
-        if args.print_result and len(args.config_files) != 1:
-            raise Exception("if %s is enabled, only one file can be passed as input" % argparse._get_action_name(
-                print_result_action))
+        if args.pipe and len(args.config_files) != 0:
+            raise Exception("if %s is enabled, no file can be passed as input" % _aname(pipe_arg))
+        if args.pipe and args.backup_original:
+            raise Exception("cannot create backup file when %s is enabled" % _aname(pipe_arg))
+        if args.print_result and len(args.config_files) > 1:
+            raise Exception("if %s is enabled, only one file can be passed as input" % _aname(print_result_arg))
+        if len(args.config_files) == 0 and not args.pipe:
+            raise Exception("no input files provided, specify at least one file or use %s" % _aname(pipe_arg))
     except Exception as e:
         arg_parser.error(str(e))
 
@@ -331,7 +349,10 @@ def _standalone_run(program_arguments):
     format_options.indentation = args.indent
     formatter = Formatter(format_options)
 
-    if args.print_result:
+    if args.pipe:
+        original_content = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+        print(formatter.format_string(original_content.read()))
+    elif args.print_result:
         print(formatter.get_formatted_string_from_file(args.config_files[0]))
     else:
         for config_file_path in args.config_files:
