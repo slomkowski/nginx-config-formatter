@@ -18,7 +18,7 @@ import sys
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.2.0-SNAPSHOT"
+__version__ = "1.2.1"
 
 
 class FormatterOptions:
@@ -360,5 +360,9 @@ def _standalone_run(program_arguments):
             formatter.format_file(config_file_path, backup_file_path)
 
 
-if __name__ == "__main__":
+def main():
     _standalone_run(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    main()
