@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""This Python script formats nginx configuration files in consistent way.
+"""nginx config file formatter/beautifier with no additional dependencies.
 
 Originally published under https://github.com/1connect/nginx-config-formatter,
 then moved to https://github.com/slomkowski/nginx-config-formatter.
@@ -18,7 +18,7 @@ import sys
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 
 class FormatterOptions:

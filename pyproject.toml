@@ -1,16 +1,13 @@
 [tool.poetry]
 name = "nginxfmt"
-version = "1.2.1"
-description = "nginx config file formatter with no additional dependencies."
-authors = ["Michał Słomkowski"]
-license = "Apache 2.0"
+version = "1.2.2"
+description = "nginx config file formatter/beautifier with no additional dependencies."
+authors = ["Michał Słomkowski <michal@slomkowski.eu>"]
+license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/slomkowski/nginx-config-formatter"
 repository = "https://github.com/slomkowski/nginx-config-formatter"
-keywords = ["nginx", "formatter"]
-include = [
-    "LICENSE",
-]
+keywords = ["nginx", "formatter", "formatting", "beautifier"]
 
 
 [tool.poetry.dependencies]

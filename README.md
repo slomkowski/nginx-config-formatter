@@ -1,16 +1,26 @@
-# *nginx* config file formatter
+# *nginx* config file formatter/beautifier
 
-This Python script formats *nginx* configuration files in consistent way, described below:
+*nginx* config file formatter/beautifier written in Python with no additional dependencies. It can be used as library or standalone script. It formats *nginx* configuration files in consistent way, described below:
 
-* all lines are indented in uniform manner, with 4 spaces per level
-* neighbouring empty lines are collapsed to at most two empty lines
-* curly braces placement follows Java convention
-* whitespaces are collapsed, except in comments and quotation marks
+* All lines are indented in uniform manner, with 4 spaces per level. Number of spaces is customizable.
+* Neighbouring empty lines are collapsed to at most two empty lines.
+* Curly braces placement follows Java convention.
+* Whitespaces are collapsed, except in comments and quotation marks.
+
 
 ## Installation
 
-Python 3.4 or later is needed to run this program. The simplest form of installation would be copying `nginxfmt.py` to
-your scripts directory.
+Python 3.4 or later is needed to run this program. The easiest way is to download package from PyPI:
+
+```bash
+pip3 install nginxfmt
+```
+
+
+### Manual installation
+
+The simplest form of installation would be copying `nginxfmt.py` to
+your scripts directory. It has no 3-rd party dependencies.
 
 You can also clone the repository and symlink the executable:
 
@@ -20,7 +30,11 @@ git clone https://github.com/slomkowski/nginx-config-formatter.git
 ln -s ~/nginx-config-formatter/nginxfmt.py ~/bin/nginxfmt.py
 ```
 
-## Usage
+
+## Usage as standalone script
+
+It can format one or several files. Result is by default saved to the original file, but can be redirected to *stdout*.
+It can also function in piping mode, with `--pipe` switch.
 
 ```
 usage: nginxfmt.py [-h] [-v] [-] [-p | -b] [-i INDENT] [config_files ...]
@@ -42,6 +56,7 @@ formatting options:
   -i INDENT, --indent INDENT
                         specify number of spaces for indentation
 ```
+
 
 ## Using as library
 
@@ -75,6 +90,7 @@ fo.indentation = 2  # 2 spaces instead of default 4
 f = nginxfmt.Formatter(fo)
 ```
 
+
 ## Reporting bugs
 
 Please create issue under https://github.com/slomkowski/nginx-config-formatter/issues. Be sure to add config snippets to
@@ -84,6 +100,7 @@ reproduce the issue, preferably:
 * actual result with invalid formatting
 * desired result
 
+
 ## Credits
 
-Copyright 2021 Michał Słomkowski. License: Apache 2.0.
+Copyright 2021 Michał Słomkowski. License: Apache 2.0. Previously published under https://github.com/1connect/nginx-config-formatter.
