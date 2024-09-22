@@ -121,14 +121,24 @@ class Formatter:
             return single_line
 
         within_quotes = False
-        parts = []
-        for part in re.split('"', single_line):
-            if within_quotes:
-                parts.append(part)
+        quote_char = None
+        result = []
+        for char in single_line:
+            if char in ['"', "'"]:
+                if within_quotes:
+                    if char == quote_char:
+                        within_quotes = False
+                        quote_char = None
+                else:
+                    within_quotes = True
+                    quote_char = char
+                result.append(char)
+            elif not within_quotes and re.match(r'\s', char):
+                if result[-1] != ' ':
+                    result.append(' ')
             else:
-                parts.append(re.sub(r'[\s]+', ' ', part))
-            within_quotes = not within_quotes
-        return '"'.join(parts)
+                result.append(char)
+        return ''.join(result)
 
     @staticmethod
     def _count_multi_semicolon(single_line):
@@ -138,14 +148,21 @@ class Formatter:
             return 0, 0
 
         within_quotes = False
+        quote_char = None
         q = 0
         c = 0
-        for part in re.split('"', single_line):
-            if within_quotes:
-                q = 1
-            else:
-                c += part.count(';')
-            within_quotes = not within_quotes
+        for char in single_line:
+            if char in ['"', "'"]:
+                if within_quotes:
+                    if char == quote_char:
+                        within_quotes = False
+                        quote_char = None
+                else:
+                    within_quotes = True
+                    quote_char = char
+                    q = 1
+            elif not within_quotes and char == ';':
+                c += 1
         return q, c
 
     @staticmethod
@@ -156,14 +173,23 @@ class Formatter:
             return single_line
 
         within_quotes = False
-        parts = []
-        for part in re.split('"', single_line):
-            if within_quotes:
-                parts.append(part)
+        quote_char = None
+        result = []
+        for char in single_line:
+            if char in ['"', "'"]:
+                if within_quotes:
+                    if char == quote_char:
+                        within_quotes = False
+                        quote_char = None
+                else:
+                    within_quotes = True
+                    quote_char = char
+                result.append(char)
+            elif not within_quotes and char == ';':
+                result.append(";\n")
             else:
-                parts.append(part.replace(";", ";\n"))
-            within_quotes = not within_quotes
-        return '"'.join(parts)
+                result.append(char)
+        return ''.join(result)
 
     def _apply_variable_template_tags(self, line: str) -> str:
         """Replaces variable indicators ${ and } with tags, so subsequent formatting is easier."""

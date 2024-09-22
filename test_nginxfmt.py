@@ -239,6 +239,16 @@ class TestFormatter(unittest.TestCase):
                               '    deny all;\n' +
                               '}\n')
 
+    def test_quotes1(self):
+        self.check_formatting('''add_header Alt-Svc 'h3-25=":443"; ma=86400'; add_header Alt-Svc 'h3-29=":443"; ma=86400';''',
+                              '''add_header Alt-Svc 'h3-25=":443"; ma=86400';\n''' +
+                              '''add_header Alt-Svc 'h3-29=":443"; ma=86400';\n''')
+
+    def test_quotes2(self):
+        self.check_formatting('''add_header Alt-Svc "h3-23=':443'; ma=86400"; add_header Alt-Svc 'h3-29=":443"; ma=86400';''',
+                              '''add_header Alt-Svc "h3-23=':443'; ma=86400";\n''' +
+                              '''add_header Alt-Svc 'h3-29=":443"; ma=86400';\n''')
+
     def test_loading_utf8_file(self):
         tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
         try:
