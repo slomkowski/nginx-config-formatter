@@ -18,7 +18,7 @@ import sys
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 
 class FormatterOptions:
