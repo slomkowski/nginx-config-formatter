@@ -20,7 +20,7 @@ pip3 install nginxfmt
 ### Manual installation
 
 The simplest form of installation would be copying `nginxfmt.py` to
-your scripts directory. It has no 3-rd party dependencies.
+your scripts' directory. It has no 3-rd party dependencies.
 
 You can also clone the repository and symlink the executable:
 
