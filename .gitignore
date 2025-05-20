@@ -139,3 +139,5 @@ dmypy.json
 
 examples/
 deploy*.sh
+
+poetry.lock

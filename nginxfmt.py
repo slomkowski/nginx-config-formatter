@@ -8,22 +8,23 @@ then moved to https://github.com/slomkowski/nginx-config-formatter.
 """
 
 import argparse
-import codecs
 import contextlib
 import io
 import logging
+import os
 import pathlib
 import re
 import sys
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.2.3"
+__version__ = "1.3.0"
 
 
 class FormatterOptions:
     """Class holds the formatting options. For now, only indentation supported."""
     indentation = 4
+    line_endings = os.linesep
 
 
 class Formatter:
@@ -43,19 +44,24 @@ class Formatter:
     def format_string(self,
                       contents: str) -> str:
         """Accepts the string containing nginx configuration and returns formatted one. Adds newline at the end."""
+        ls = self.options.line_endings
         lines = contents.splitlines()
         lines = self._apply_bracket_template_tags(lines)
         lines = self._clean_lines(lines)
         lines = self._join_opening_bracket(lines)
         lines = self._perform_indentation(lines)
 
-        text = '\n'.join(lines)
+        text = ls.join(lines)
         text = self._strip_bracket_template_tags(text)
 
-        for pattern, substitute in ((r'\n{3,}', '\n\n\n'), (r'^\n', ''), (r'\n$', '')):
-            text = re.sub(pattern, substitute, text, re.MULTILINE)
+        for pattern, substitute in (
+                (r'%s{3,}' % ls, '%s%s%s' % (ls, ls, ls)),
+                (r'^%s' % ls, ''),
+                (r'%s$' % ls, '')
+        ):
+            text = re.sub(pattern, substitute, text)
 
-        return text + '\n'
+        return text + ls
 
     def get_formatted_string_from_file(self,
                                        file_path: pathlib.Path) -> str:
@@ -74,13 +80,13 @@ class Formatter:
 
         chosen_encoding, original_file_content = self._load_file_content(file_path)
 
-        with codecs.open(file_path, 'w', encoding=chosen_encoding) as wfp:
+        with file_path.open('w', encoding=chosen_encoding) as wfp:
             wfp.write(self.format_string(original_file_content))
 
         self.logger.info("Formatted content written to original file.")
 
         if original_backup_file_path:
-            with codecs.open(original_backup_file_path, 'w', encoding=chosen_encoding) as wfp:
+            with original_backup_file_path.open('w', encoding=chosen_encoding) as wfp:
                 wfp.write(original_file_content)
             self.logger.info("Original content saved to '%s'.", original_backup_file_path)
 
@@ -96,7 +102,7 @@ class Formatter:
 
         for enc in encodings:
             try:
-                with codecs.open(file_path, 'r', encoding=enc) as rfp:
+                with file_path.open('r', encoding=enc) as rfp:
                     original_file_content = rfp.read()
                 chosen_encoding = enc
                 break
@@ -165,8 +171,7 @@ class Formatter:
                 c += 1
         return q, c
 
-    @staticmethod
-    def _multi_semicolon(single_line):
+    def _multi_semicolon(self, single_line):
         """Break multi semicolon into multiline (except when within quotation marks)."""
         single_line = single_line.strip()
         if single_line.startswith('#'):
@@ -186,7 +191,7 @@ class Formatter:
                     quote_char = char
                 result.append(char)
             elif not within_quotes and char == ';':
-                result.append(";\n")
+                result.append(";%s" % self.options.line_endings)
             else:
                 result.append(char)
         return ''.join(result)
@@ -349,8 +354,21 @@ def _standalone_run(program_arguments):
                             help="configuration files to format")
 
     formatter_options_group = arg_parser.add_argument_group("formatting options")
-    formatter_options_group.add_argument("-i", "--indent", action="store", default=4, type=int,
+    formatter_options_group.add_argument("-i",
+                                         "--indent",
+                                         action="store",
+                                         default=4,
+                                         type=int,
                                          help="specify number of spaces for indentation")
+    formatter_options_group.add_argument(
+        "--line-endings",
+        choices=["auto", "unix", "windows", "crlf", "lf"],
+        default="auto",
+        help=(
+            "specify line ending style: 'unix' or 'lf' for \\n, "
+            "'windows' or 'crlf' for \\r\\n. When not provided, system-default is used"
+        )
+    )
 
     with _redirect_stdout_to_stderr():
         args = arg_parser.parse_args(program_arguments)
@@ -373,17 +391,25 @@ def _standalone_run(program_arguments):
 
     format_options = FormatterOptions()
     format_options.indentation = args.indent
+
+    if args.line_endings in ["unix", "lf"]:
+        format_options.line_endings = '\n'
+    elif args.line_endings in ["windows", "crlf"]:
+        format_options.line_endings = '\r\n'
+    else:
+        format_options.line_endings = os.linesep
+
     formatter = Formatter(format_options)
 
     if args.pipe:
         original_content = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
         print(formatter.format_string(original_content.read()))
     elif args.print_result:
-        print(formatter.get_formatted_string_from_file(args.config_files[0]))
+        print(formatter.get_formatted_string_from_file(pathlib.Path(args.config_files[0])))
     else:
         for config_file_path in args.config_files:
-            backup_file_path = config_file_path + '~' if args.backup_original else None
-            formatter.format_file(config_file_path, backup_file_path)
+            backup_file_path = pathlib.Path(config_file_path + '~') if args.backup_original else None
+            formatter.format_file(pathlib.Path(config_file_path), backup_file_path)
 
 
 def main():

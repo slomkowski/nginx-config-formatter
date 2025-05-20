@@ -375,6 +375,9 @@ class TestFormatter(unittest.TestCase):
                                       "}\n"))
 
 
+#todo  tests for unix and windows line endings
+
+
 class TestStandaloneRun(unittest.TestCase):
 
     @contextlib.contextmanager

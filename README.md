@@ -1,6 +1,8 @@
 # *nginx* config file formatter/beautifier
 
-*nginx* config file formatter/beautifier written in Python with no additional dependencies. It can be used as library or standalone script. It formats *nginx* configuration files in consistent way, described below:
+*nginx* config file formatter/beautifier written in Python with no additional dependencies. 
+It can be used as library or standalone script. 
+It formats *nginx* configuration files in consistent way, described below:
 
 * All lines are indented in uniform manner, with 4 spaces per level. Number of spaces is customizable.
 * Neighbouring empty lines are collapsed to at most two empty lines.
@@ -19,8 +21,7 @@ pip3 install nginxfmt
 
 ### Manual installation
 
-The simplest form of installation would be copying `nginxfmt.py` to
-your scripts' directory. It has no 3-rd party dependencies.
+The simplest form of installation would be copying `nginxfmt.py` to your scripts' directory. It has no third party dependencies.
 
 You can also clone the repository and symlink the executable:
 
@@ -97,7 +98,7 @@ Please create issue under https://github.com/slomkowski/nginx-config-formatter/i
 reproduce the issue, preferably:
 
 * snippet do be formatted
-* actual result with invalid formatting
+* actual result with the invalid formatting
 * desired result
 
 
