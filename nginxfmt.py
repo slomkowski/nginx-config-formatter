@@ -403,9 +403,9 @@ def _standalone_run(program_arguments):
 
     if args.pipe:
         original_content = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-        print(formatter.format_string(original_content.read()))
+        print(formatter.format_string(original_content.read()), end="")
     elif args.print_result:
-        print(formatter.get_formatted_string_from_file(pathlib.Path(args.config_files[0])))
+        print(formatter.get_formatted_string_from_file(pathlib.Path(args.config_files[0])), end="")
     else:
         for config_file_path in args.config_files:
             backup_file_path = pathlib.Path(config_file_path + '~') if args.backup_original else None

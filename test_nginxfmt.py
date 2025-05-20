@@ -3,6 +3,7 @@
 
 """Unit tests for nginxfmt module."""
 import contextlib
+import io
 import logging
 import pathlib
 import shutil
@@ -16,14 +17,21 @@ __license__ = "Apache 2.0"
 
 
 class TestFormatter(unittest.TestCase):
-    fmt = nginxfmt.Formatter()
 
     def __init__(self, method_name: str = ...) -> None:
         super().__init__(method_name)
         logging.basicConfig(level=logging.DEBUG)  # todo fix logging in debug
 
-    def check_formatting(self, original_text: str, formatted_text: str):
-        self.assertMultiLineEqual(formatted_text, self.fmt.format_string(original_text))
+        fmt_options = nginxfmt.FormatterOptions()
+        fmt_options.line_endings = '\n'  # force Unix LF for tests
+        self.fmt = nginxfmt.Formatter(fmt_options)
+
+        fmt_options_crlf = nginxfmt.FormatterOptions()
+        fmt_options_crlf.line_endings = '\r\n'  # CRLF formatter
+        self.fmt_crlf = nginxfmt.Formatter(fmt_options_crlf)
+
+    def check_formatting(self, original_text: str, formatted_text: str, formatter=None):
+        self.assertMultiLineEqual(formatted_text, (formatter if formatter else self.fmt).format_string(original_text))
 
     def check_stays_the_same(self, text: str):
         self.assertMultiLineEqual(text, self.fmt.format_string(text))
@@ -240,14 +248,16 @@ class TestFormatter(unittest.TestCase):
                               '}\n')
 
     def test_quotes1(self):
-        self.check_formatting('''add_header Alt-Svc 'h3-25=":443"; ma=86400'; add_header Alt-Svc 'h3-29=":443"; ma=86400';''',
-                              '''add_header Alt-Svc 'h3-25=":443"; ma=86400';\n''' +
-                              '''add_header Alt-Svc 'h3-29=":443"; ma=86400';\n''')
+        self.check_formatting(
+            '''add_header Alt-Svc 'h3-25=":443"; ma=86400'; add_header Alt-Svc 'h3-29=":443"; ma=86400';''',
+            '''add_header Alt-Svc 'h3-25=":443"; ma=86400';\n''' +
+            '''add_header Alt-Svc 'h3-29=":443"; ma=86400';\n''')
 
     def test_quotes2(self):
-        self.check_formatting('''add_header Alt-Svc "h3-23=':443'; ma=86400"; add_header Alt-Svc 'h3-29=":443"; ma=86400';''',
-                              '''add_header Alt-Svc "h3-23=':443'; ma=86400";\n''' +
-                              '''add_header Alt-Svc 'h3-29=":443"; ma=86400';\n''')
+        self.check_formatting(
+            '''add_header Alt-Svc "h3-23=':443'; ma=86400"; add_header Alt-Svc 'h3-29=":443"; ma=86400';''',
+            '''add_header Alt-Svc "h3-23=':443'; ma=86400";\n''' +
+            '''add_header Alt-Svc 'h3-29=":443"; ma=86400';\n''')
 
     def test_loading_utf8_file(self):
         tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
@@ -374,16 +384,34 @@ class TestFormatter(unittest.TestCase):
                                       "     foo    bar;\n"
                                       "}\n"))
 
+    def test_crlf_1(self):
+        self.check_formatting(
+            "location /example \r\n{\r\nallow 192.168.0.0/16; deny all;\r\n}\n",
+            "location /example {\n"
+            "    allow 192.168.0.0/16;\n"
+            "    deny all;\n"
+            "}\n")
 
-#todo  tests for unix and windows line endings
+        self.check_formatting(
+            "location /example \r\n{\r\nallow 192.168.0.0/16; deny all;\r\n}\n",
+            "location /example {\r\n"
+            "    allow 192.168.0.0/16;\r\n"
+            "    deny all;\r\n"
+            "}\r\n",
+            formatter=self.fmt_crlf)
 
 
 class TestStandaloneRun(unittest.TestCase):
+
+    def __init__(self, method_name: str = ...) -> None:
+        super().__init__(method_name)
+        logging.basicConfig(level=logging.DEBUG)  # todo fix logging in debug
 
     @contextlib.contextmanager
     def input_test_file(self, file_name):
         tmp_file = pathlib.Path(tempfile.mkstemp('utf-8')[1])
         try:
+            logging.debug("Input file saved to", tmp_file)
             shutil.copy('test-files/' + file_name, tmp_file)
             yield str(tmp_file)
             # todo perform some tests on result file
@@ -392,8 +420,25 @@ class TestStandaloneRun(unittest.TestCase):
 
     # todo better tests of standalone mode?
     def test_print_result(self):
-        with self.input_test_file('not-formatted-1.conf') as input:
-            nginxfmt._standalone_run(['-p', input])
+        with self.input_test_file('not-formatted-1.conf') as input_file:
+            nginxfmt._standalone_run(['-p', input_file])
+
+    def test_print_result_line_endings_windows(self):
+        f = io.StringIO()
+        with self.input_test_file('not-formatted-1.conf') as input_file:
+            with contextlib.redirect_stdout(f):
+                nginxfmt._standalone_run(['--line-endings=windows', '-p', input_file])
+        output = f.getvalue()
+        self.assertEqual(output.count('\r\n'), 5)
+
+    def test_print_result_line_endings_unix(self):
+        f = io.StringIO()
+        with self.input_test_file('not-formatted-1.conf') as input_file:
+            with contextlib.redirect_stdout(f):
+                nginxfmt._standalone_run(['--line-endings=unix', '-p', input_file])
+        output = f.getvalue()
+        self.assertEqual(output.count('\r\n'), 0)
+        self.assertEqual(output.count('\n'), 5)
 
 
 if __name__ == '__main__':
