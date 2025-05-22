@@ -111,7 +111,7 @@ class Formatter:
 
         if chosen_encoding is None:
             raise Exception('none of encodings %s are valid for file %s. Errors: %s'
-                            % (encodings, file_path, [e.message for e in encoding_failures]))
+                            % (encodings, file_path, [str(e) for e in encoding_failures]))
 
         self.logger.info("Loaded file '%s' (detected encoding %s).", file_path, chosen_encoding)
 
@@ -329,7 +329,9 @@ def _redirect_stdout_to_stderr():
 
 def _aname(action) -> str:
     """Converts argument name to string to be consistent with argparse."""
-    return argparse._get_action_name(action)
+    if action.option_strings:
+        return '/'.join(action.option_strings)
+    return action.dest
 
 
 def _standalone_run(program_arguments):

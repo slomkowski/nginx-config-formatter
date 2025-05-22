@@ -1,27 +1,30 @@
 # *nginx* config file formatter/beautifier
 
-*nginx* config file formatter/beautifier written in Python with no additional dependencies. 
-It can be used as library or standalone script. 
-It formats *nginx* configuration files in consistent way, described below:
+*nginx* config file formatter/beautifier written in Python with no additional dependencies.
+It can be used as a library or a standalone script.
+It formats *nginx* configuration files in a consistent way, described below:
 
-* All lines are indented in uniform manner, with 4 spaces per level. Number of spaces is customizable.
-* Neighbouring empty lines are collapsed to at most two empty lines.
-* Curly braces placement follows Java convention.
-* Whitespaces are collapsed, except in comments and quotation marks.
+* All lines are indented uniformly, with 4 spaces per level. The number of spaces is customizable.
+* Neighboring empty lines are collapsed to at most two.
+* Curly brace placement follows the Java convention.
+* Whitespace is collapsed, except in comments and within quotation marks.
+* Newline characters are normalized to the operating system default (LF or CRLF), but this can be overridden.
 
 
 ## Installation
 
-Python 3.4 or later is needed to run this program. The easiest way is to download package from PyPI:
+Python 3.4 or later is needed to run this program.
+The easiest way is to download the package from PyPI:
 
 ```bash
-pip3 install nginxfmt
+pip install nginxfmt
 ```
 
 
 ### Manual installation
 
-The simplest form of installation would be copying `nginxfmt.py` to your scripts' directory. It has no third party dependencies.
+The simplest form of installation is copying `nginxfmt.py` to your scripts' directory.
+It has no third-party dependencies.
 
 You can also clone the repository and symlink the executable:
 
@@ -34,34 +37,36 @@ ln -s ~/nginx-config-formatter/nginxfmt.py ~/bin/nginxfmt.py
 
 ## Usage as standalone script
 
-It can format one or several files. Result is by default saved to the original file, but can be redirected to *stdout*.
-It can also function in piping mode, with `--pipe` switch.
+It can format one or several files.
+By default, the result is saved to the original file, but it can be redirected to *stdout*.
+It can also function in piping mode, using the `--pipe` or `-` switch.
 
 ```
-usage: nginxfmt.py [-h] [-v] [-] [-p | -b] [-i INDENT] [config_files ...]
+usage: nginxfmt.py [-h] [-v] [-] [-p | -b] [-i INDENT] [--line-endings {auto,unix,windows,crlf,lf}] [config_files ...]
 
 Formats nginx configuration files in consistent way.
 
 positional arguments:
-  config_files          configuration files to format
+config_filesconfiguration files to format
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -v, --verbose         show formatted file names
-  -, --pipe             reads content from standard input, prints result to stdout
-  -p, --print-result    prints result to stdout, original file is not changed
-  -b, --backup-original
-                        backup original config file as filename.conf~
+options:
+-h, --helpshow this help message and exit
+-v, --verbose show formatted file names
+-, --pipe reads content from standard input, prints result to stdout
+-p, --print-resultprints result to stdout, original file is not changed
+-b, --backup-original
+backup original config file as filename.conf~
 
 formatting options:
-  -i INDENT, --indent INDENT
-                        specify number of spaces for indentation
+-i, --indent INDENT specify number of spaces for indentation
+--line-endings {auto,unix,windows,crlf,lf}
+specify line ending style: 'unix' or 'lf' for \n, 'windows' or 'crlf' for \r\n. When not provided, system-default is used
 ```
 
 
 ## Using as library
 
-Main logic is within `Formatter` class, which can be used in 3rd-party code.
+The main logic is within the `Formatter` class, which can be used in third-party code.
 
 ```python
 import nginxfmt
@@ -85,23 +90,25 @@ Customizing formatting options:
 import nginxfmt
 
 fo = nginxfmt.FormatterOptions()
-fo.indentation = 2  # 2 spaces instead of default 4
+fo.indentation = 2# 2 spaces instead of default 4
+fo.line_endings = '\n'# force Unix line endings
 
-# initializing with standard FormatterOptions
+# initialize with standard FormatterOptions
 f = nginxfmt.Formatter(fo)
 ```
 
 
 ## Reporting bugs
 
-Please create issue under https://github.com/slomkowski/nginx-config-formatter/issues. Be sure to add config snippets to
-reproduce the issue, preferably:
+Please create an issue at https://github.com/slomkowski/nginx-config-formatter/issues.
+Be sure to include config snippets to reproduce the issue, preferably:
 
-* snippet do be formatted
-* actual result with the invalid formatting
-* desired result
-
+* Snippet to be formatted
+* Actual result with the invalid formatting
+* Desired result
 
 ## Credits
 
-Copyright 2021 Michał Słomkowski. License: Apache 2.0. Previously published under https://github.com/1connect/nginx-config-formatter.
+Copyright 2021 Michał Słomkowski.
+License: Apache 2.0.
+Previously published under https://github.com/1connect/nginx-config-formatter.
