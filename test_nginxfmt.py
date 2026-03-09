@@ -7,6 +7,7 @@ import io
 import logging
 import pathlib
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -384,6 +385,43 @@ class TestFormatter(unittest.TestCase):
                                       "     foo    bar;\n"
                                       "}\n"))
 
+    def test_max_empty_lines_default(self):
+        self.check_formatting(
+            "foo bar {\n\n\n\n\n" +
+            "    lorem ipsum;\n" +
+            "}\n",
+            "foo bar {\n\n\n" +
+            "    lorem ipsum;\n" +
+            "}\n")  # 5 newlines collapsed to 3 (= 2 empty lines)
+
+    def test_max_empty_lines_custom(self):
+        fo = nginxfmt.FormatterOptions()
+        fo.line_endings = '\n'
+        fo.max_empty_lines = 1
+        fmt1 = nginxfmt.Formatter(fo)
+        self.assertMultiLineEqual(
+            "foo bar {\n\n" +
+            "    lorem ipsum;\n" +
+            "}\n",  # 5 newlines collapsed to 2 (= 1 empty line)
+            fmt1.format_string(
+                "foo bar {\n\n\n\n\n" +
+                "    lorem ipsum;\n" +
+                "}\n"))
+
+    def test_max_empty_lines_zero(self):
+        fo = nginxfmt.FormatterOptions()
+        fo.line_endings = '\n'
+        fo.max_empty_lines = 0
+        fmt0 = nginxfmt.Formatter(fo)
+        self.assertMultiLineEqual(
+            "foo bar {\n" +
+            "    lorem ipsum;\n" +
+            "}\n",  # all empty lines removed
+            fmt0.format_string(
+                "foo bar {\n\n\n\n\n" +
+                "    lorem ipsum;\n" +
+                "}\n"))
+
     def test_crlf_1(self):
         self.check_formatting(
             "location /example \r\n{\r\nallow 192.168.0.0/16; deny all;\r\n}\n",
@@ -439,6 +477,20 @@ class TestStandaloneRun(unittest.TestCase):
         output = f.getvalue()
         self.assertEqual(output.count('\r\n'), 0)
         self.assertEqual(output.count('\n'), 5)
+
+    def test_max_empty_lines_cli(self):
+        f = io.StringIO()
+        input_text = "foo bar {\n\n\n\n\nlorem ipsum;\n}\n"
+        old_stdin = sys.stdin
+        try:
+            sys.stdin = io.TextIOWrapper(io.BytesIO(input_text.encode('utf-8')))
+            with contextlib.redirect_stdout(f):
+                nginxfmt._standalone_run(['--line-endings=unix', '--max-empty-lines=1', '-'])
+        finally:
+            sys.stdin = old_stdin
+        output = f.getvalue()
+        self.assertNotIn('\n\n\n', output)
+        self.assertIn('\n\n', output)
 
 
 if __name__ == '__main__':

@@ -25,6 +25,7 @@ class FormatterOptions:
     """Class holds the formatting options. For now, only indentation supported."""
     indentation = 4
     line_endings = os.linesep
+    max_empty_lines = 2
 
 
 class Formatter:
@@ -54,8 +55,9 @@ class Formatter:
         text = ls.join(lines)
         text = self._strip_bracket_template_tags(text)
 
+        max_empty = self.options.max_empty_lines
         for pattern, substitute in (
-                (r'%s{3,}' % ls, '%s%s%s' % (ls, ls, ls)),
+                (r'%s{%d,}' % (ls, max_empty + 2), ls * (max_empty + 1)),
                 (r'^%s' % ls, ''),
                 (r'%s$' % ls, '')
         ):
@@ -362,6 +364,11 @@ def _standalone_run(program_arguments):
                                          default=4,
                                          type=int,
                                          help="specify number of spaces for indentation")
+    formatter_options_group.add_argument("--max-empty-lines",
+                                         action="store",
+                                         default=2,
+                                         type=int,
+                                         help="maximum number of consecutive empty lines to keep (default: 2)")
     formatter_options_group.add_argument(
         "--line-endings",
         choices=["auto", "unix", "windows", "crlf", "lf"],
@@ -393,6 +400,7 @@ def _standalone_run(program_arguments):
 
     format_options = FormatterOptions()
     format_options.indentation = args.indent
+    format_options.max_empty_lines = args.max_empty_lines
 
     if args.line_endings in ["unix", "lf"]:
         format_options.line_endings = '\n'
