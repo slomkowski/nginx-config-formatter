@@ -5,7 +5,7 @@ It can be used as a library or a standalone script.
 It formats *nginx* configuration files in a consistent way, described below:
 
 * All lines are indented uniformly, with 4 spaces per level. The number of spaces is customizable.
-* Neighboring empty lines are collapsed to at most two.
+* Neighboring empty lines are collapsed to at most two. The number is customizable (see options below).
 * Curly brace placement follows the Java convention.
 * Whitespace is collapsed, except in comments and within quotation marks.
 * Newline characters are normalized to the operating system default (LF or CRLF), but this can be overridden.
@@ -42,7 +42,7 @@ By default, the result is saved to the original file, but it can be redirected t
 It can also function in piping mode, using the `--pipe` or `-` switch.
 
 ```
-usage: nginxfmt.py [-h] [-v] [-] [-p | -b] [-i INDENT] [--line-endings {auto,unix,windows,crlf,lf}] [config_files ...]
+usage: nginxfmt.py [-h] [-v] [-] [-p | -b] [-i INDENT] [--max-empty-lines MAX_EMPTY_LINES] [--line-endings {auto,unix,windows,crlf,lf}] [config_files ...]
 
 Formats nginx configuration files in consistent way.
 
@@ -59,6 +59,8 @@ backup original config file as filename.conf~
 
 formatting options:
 -i, --indent INDENT specify number of spaces for indentation
+--max-empty-lines MAX_EMPTY_LINES
+maximum number of consecutive empty lines to keep (default: 2)
 --line-endings {auto,unix,windows,crlf,lf}
 specify line ending style: 'unix' or 'lf' for \n, 'windows' or 'crlf' for \r\n. When not provided, system-default is used
 ```
@@ -90,8 +92,9 @@ Customizing formatting options:
 import nginxfmt
 
 fo = nginxfmt.FormatterOptions()
-fo.indentation = 2# 2 spaces instead of default 4
-fo.line_endings = '\n'# force Unix line endings
+fo.indentation = 2  # 2 spaces instead of default 4
+fo.line_endings = '\n'  # force Unix line endings
+fo.max_empty_lines = 1  # allow at most 1 consecutive empty line (default: 2)
 
 # initialize with standard FormatterOptions
 f = nginxfmt.Formatter(fo)
