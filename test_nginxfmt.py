@@ -394,33 +394,47 @@ class TestFormatter(unittest.TestCase):
             "    lorem ipsum;\n" +
             "}\n")  # 5 newlines collapsed to 3 (= 2 empty lines)
 
-    def test_max_empty_lines_custom(self):
+    def test_max_empty_lines_1(self):
         fo = nginxfmt.FormatterOptions()
         fo.line_endings = '\n'
         fo.max_empty_lines = 1
         fmt1 = nginxfmt.Formatter(fo)
-        self.assertMultiLineEqual(
+        self.check_formatting(
+            "foo bar {\n\n\n\n\n" +
+            "    lorem ipsum;\n" +
+            "}\n",
             "foo bar {\n\n" +
             "    lorem ipsum;\n" +
             "}\n",  # 5 newlines collapsed to 2 (= 1 empty line)
-            fmt1.format_string(
-                "foo bar {\n\n\n\n\n" +
-                "    lorem ipsum;\n" +
-                "}\n"))
+            fmt1)
+
+    def test_max_empty_lines_5(self):
+        fo = nginxfmt.FormatterOptions()
+        fo.line_endings = '\n'
+        fo.max_empty_lines = 5  # Allow up to 5 empty lines
+        fmt5 = nginxfmt.Formatter(fo)
+        self.check_formatting(
+            "foo bar {\n\n\n\n\n\n\n" +  # Excess empty lines beyond 5
+            "    lorem ipsum;\n\n\n\n\n\n\n\n\n\n" +
+            "}\n",
+            "foo bar {\n\n\n\n\n\n" +  # Up to 5 empty lines allowed
+            "    lorem ipsum;\n\n\n\n\n\n" +
+            "}\n",  # Input with 5 empty lines retains them
+            fmt5)
 
     def test_max_empty_lines_zero(self):
         fo = nginxfmt.FormatterOptions()
         fo.line_endings = '\n'
         fo.max_empty_lines = 0
         fmt0 = nginxfmt.Formatter(fo)
-        self.assertMultiLineEqual(
+        self.check_formatting(
+            "foo bar {\n\n\n\n\n" +
+            "    lorem ipsum;\n" +
+            "}\n",
             "foo bar {\n" +
             "    lorem ipsum;\n" +
             "}\n",  # all empty lines removed
-            fmt0.format_string(
-                "foo bar {\n\n\n\n\n" +
-                "    lorem ipsum;\n" +
-                "}\n"))
+            fmt0)
 
     def test_crlf_1(self):
         self.check_formatting(

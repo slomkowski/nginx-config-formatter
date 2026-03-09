@@ -18,11 +18,11 @@ import sys
 
 __author__ = "Michał Słomkowski"
 __license__ = "Apache 2.0"
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 
 class FormatterOptions:
-    """Class holds the formatting options. For now, only indentation supported."""
+    """Class holds the formatting options."""
     indentation = 4
     line_endings = os.linesep
     max_empty_lines = 2
@@ -95,7 +95,7 @@ class Formatter:
     def _load_file_content(self,
                            file_path: pathlib.Path) -> (str, str):
         """Determines the encoding of the input file and loads its content to string.
-        :param file_path: path to original nginx configuration file."""
+        :param file_path: Path to the original nginx configuration file."""
 
         encodings = ('utf-8', 'latin1')
         encoding_failures = []
@@ -122,7 +122,7 @@ class Formatter:
 
     @staticmethod
     def _strip_line(single_line):
-        """Strips the line and replaces neighbouring whitespaces with single space (except when within quotation
+        """Strips the line and replaces neighboring whitespaces with a single space (except when within quotation
         marks). """
         single_line = single_line.strip()
         if single_line.startswith('#'):
@@ -288,7 +288,7 @@ class Formatter:
 
     @staticmethod
     def _join_opening_bracket(lines):
-        """When opening curly bracket is in it's own line (K&R convention), it's joined with precluding line (Java)."""
+        """When opening the curly bracket is in its own line (K&R convention), it's joined with the precluding line (Java)."""
         modified_lines = []
         for i in range(len(lines)):
             if i > 0 and lines[i] == "{":

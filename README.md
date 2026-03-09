@@ -4,7 +4,7 @@
 It can be used as a library or a standalone script.
 It formats *nginx* configuration files in a consistent way, described below:
 
-* All lines are indented uniformly, with 4 spaces per level. The number of spaces is customizable.
+* All lines are indented uniformly, with four spaces per level. The number of spaces is customizable.
 * Neighboring empty lines are collapsed to at most two. The number is customizable (see options below).
 * Curly brace placement follows the Java convention.
 * Whitespace is collapsed, except in comments and within quotation marks.
@@ -66,7 +66,7 @@ specify line ending style: 'unix' or 'lf' for \n, 'windows' or 'crlf' for \r\n. 
 ```
 
 
-## Using as library
+## Using as a library
 
 The main logic is within the `Formatter` class, which can be used in third-party code.
 
