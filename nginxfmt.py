@@ -275,7 +275,11 @@ class Formatter:
                     cleaned_lines.extend(self._clean_lines(ml.splitlines()))
                 elif q != 1 and c > 1:
                     newlines = line.split(";")
-                    lines_to_add = self._clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""])
+                    if line.endswith(";"):
+                        lines_to_add = self._clean_lines(["".join([ln, ";"]) for ln in newlines if ln != ""])
+                    else:
+                        lines_to_add = self._clean_lines(
+                            ["".join([ln, ";"]) for ln in newlines[:-1] if ln != ""] + ([newlines[-1]] if newlines[-1] else []))
                     cleaned_lines.extend(lines_to_add)
                 else:
                     if line.startswith("rewrite"):
